@@ -248,7 +248,7 @@ mod validate_tests {
             .run(&mut writer, &mut reader);
 
         let expected_output = indoc! {
-            r#"s3-public-read-prohibited-template-compliant.yaml Status = PASS
+            r#"/resources/validate/data-dir/s3-public-read-prohibited-template-compliant.yaml Status = PASS
                PASS rules
                s3_bucket_public_read_prohibited.guard/S3_BUCKET_PUBLIC_READ_PROHIBITED    PASS
                ---

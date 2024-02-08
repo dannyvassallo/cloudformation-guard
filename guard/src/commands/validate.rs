@@ -301,10 +301,11 @@ or rules files.
                     let base = PathBuf::from_str(file_or_dir)?;
                     for file in walk_dir(base, cmp) {
                         if file.path().is_file() {
-                            let name = file
-                                .file_name()
-                                .to_str()
-                                .map_or("".to_string(), String::from);
+                            let full_file_path_string =
+                                file.path().to_str().map_or("".to_string(), String::from);
+                            let current_dir = std::env::current_dir().unwrap();
+                            let current_dir_str = current_dir.to_str().unwrap();
+                            let name = full_file_path_string.replace(current_dir_str, "");
 
                             if has_a_supported_extension(&name, &DATA_FILE_SUPPORTED_EXTENSIONS) {
                                 let mut content = String::new();

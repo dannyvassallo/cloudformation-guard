@@ -1,8 +1,8 @@
-s3-public-read-prohibited-template-non-compliant.yaml Status = FAIL
+/resources/validate/data-dir/s3-public-read-prohibited-template-non-compliant.yaml Status = FAIL
 FAILED rules
 s3_bucket_public_read_prohibited.guard/S3_BUCKET_PUBLIC_READ_PROHIBITED    FAIL
 ---
-Evaluating data s3-public-read-prohibited-template-non-compliant.yaml against rules s3_bucket_public_read_prohibited.guard
+Evaluating data /resources/validate/data-dir/s3-public-read-prohibited-template-non-compliant.yaml against rules s3_bucket_public_read_prohibited.guard
 Number of non-compliant resources 1
 Resource = MyBucket {
   Type      = AWS::S3::Bucket
