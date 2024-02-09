@@ -1,4 +1,4 @@
-- name: s3-public-read-prohibited-template-non-compliant.yaml
+- name: /resources/validate//data-dir/s3-public-read-prohibited-template-non-compliant.yaml
   metadata: {}
   status: FAIL
   not_compliant:

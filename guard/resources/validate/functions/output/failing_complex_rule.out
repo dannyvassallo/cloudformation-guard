@@ -1,4 +1,4 @@
-template.yaml Status = FAIL
+/resources/validate//functions/data/template.yaml Status = FAIL
 FAILED rules
 failing_complex_rule.guard/PARAMETERIZED_RULE_WITH_FUNCTION_CALL_IN_PARAMS    FAIL
 ---

@@ -1,14 +1,14 @@
-template_where_resources_isnt_root.json Status = FAIL
+/resources/validate/template_where_resources_isnt_root.json Status = FAIL
 FAILED rules
 workshop.guard/assert_no_wildcard_actions    FAIL
 ---
-Evaluation of rules workshop.guard against data template_where_resources_isnt_root.json
+Evaluation of rules workshop.guard against data /resources/validate/template_where_resources_isnt_root.json
 --
-Property [/Roles/0] in data [template_where_resources_isnt_root.json] is not compliant with [assert_no_wildcard_actions] because needed value at [{"RoleName":"MyRole","RolePath":"/","TrustPolicy":{"Statement":[{"Effect":"Allow","Principal":{"AWS":["314595678785"]},"Action":["sts:AssumeRole"]}]},"Policies":[{"Name":"root","Policy":{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]},"Path":"/","IsAWSManagedPolicy":false}]}] was not empty. Error Message []
-Property [/Roles/0/Policies/0] in data [template_where_resources_isnt_root.json] is not compliant with [assert_no_wildcard_actions] because needed value at [{"Name":"root","Policy":{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]},"Path":"/","IsAWSManagedPolicy":false}] was not empty. Error Message []
-Property [/Roles/0/Policies/0/Policy/Statement/0/Action] in data [template_where_resources_isnt_root.json] is not compliant with [assert_no_wildcard_actions] because provided value ["*"] did match expected value ["*"]. Error Message []
+Property [/Roles/0] in data [/resources/validate/template_where_resources_isnt_root.json] is not compliant with [assert_no_wildcard_actions] because needed value at [{"RoleName":"MyRole","RolePath":"/","TrustPolicy":{"Statement":[{"Effect":"Allow","Principal":{"AWS":["314595678785"]},"Action":["sts:AssumeRole"]}]},"Policies":[{"Name":"root","Policy":{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]},"Path":"/","IsAWSManagedPolicy":false}]}] was not empty. Error Message []
+Property [/Roles/0/Policies/0] in data [/resources/validate/template_where_resources_isnt_root.json] is not compliant with [assert_no_wildcard_actions] because needed value at [{"Name":"root","Policy":{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]},"Path":"/","IsAWSManagedPolicy":false}] was not empty. Error Message []
+Property [/Roles/0/Policies/0/Policy/Statement/0/Action] in data [/resources/validate/template_where_resources_isnt_root.json] is not compliant with [assert_no_wildcard_actions] because provided value ["*"] did match expected value ["*"]. Error Message []
 --
-`- File(template_where_resources_isnt_root.json, Status=FAIL)[Context=File(rules=1)]
+`- File(/resources/validate/template_where_resources_isnt_root.json, Status=FAIL)[Context=File(rules=1)]
    `- Rule(assert_no_wildcard_actions, Status=FAIL)[Context=assert_no_wildcard_actions]
       |- Disjunction(Status = FAIL)[Context=cfn_guard::rules::exprs::RuleClause#disjunction]
       |  |- GuardClauseBlock(Status = FAIL)[Context=GuardAccessClause#block Roles[*] EMPTY  ]

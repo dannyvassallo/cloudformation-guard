@@ -1,4 +1,4 @@
-template.yaml Status = FAIL
+/resources/validate//functions/data/template.yaml Status = FAIL
 FAILED rules
 count_with_message.guard/SOME_RULE    FAIL
 ---

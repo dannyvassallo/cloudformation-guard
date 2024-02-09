@@ -1,8 +1,8 @@
-failing_template_with_slash_in_key.yaml Status = FAIL
+/resources/validate/failing_template_with_slash_in_key.yaml Status = FAIL
 FAILED rules
 s3_bucket_server_side_encryption_enabled.guard/S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED    FAIL
 ---
-Evaluating data failing_template_with_slash_in_key.yaml against rules s3_bucket_server_side_encryption_enabled.guard
+Evaluating data /resources/validate/failing_template_with_slash_in_key.yaml against rules s3_bucket_server_side_encryption_enabled.guard
 Number of non-compliant resources 1
 Resource = A/Resource/Name/With/Slash {
   Type      = AWS::S3::Bucket
@@ -29,7 +29,7 @@ Resource = A/Resource/Name/With/Slash {
     }
   }
 }
-`- File(failing_template_with_slash_in_key.yaml, Status=FAIL)[Context=File(rules=1)]
+`- File(/resources/validate/failing_template_with_slash_in_key.yaml, Status=FAIL)[Context=File(rules=1)]
    `- Rule(S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED, Status=FAIL)[Context=S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED]
       |- Rule/When(Status=PASS)[Context=Rule#S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED/When]
       |  `- GuardClauseBlock(Status = PASS)[Context=GuardAccessClause#block %s3_buckets_server_side_encryption not EMPTY  ]
