@@ -81,6 +81,13 @@ jobs:
             cp ./target/i686-pc-windows-msvc/release/cfn-guard.exe ./cfn-guard-v3-i686-${{ matrix.os }}/
             cp README.md ./cfn-guard-v3-i686-${{ matrix.os }}/
             tar czvf ./cfn-guard-v3-i686-${{ matrix.os }}.tar.gz ./cfn-guard-v3-i686-${{ matrix.os }}
+
+            rustup target add aarch64-pc-windows-msvc
+            cargo build --release --target aarch64-pc-windows-msvc
+            mkdir cfn-guard-v3-aarch64-${{ matrix.os }}
+            cp ./target/i686-pc-windows-msvc/release/cfn-guard.exe ./cfn-guard-v3-aarch64-${{ matrix.os }}/
+            cp README.md ./cfn-guard-v3-aarch64-${{ matrix.os }}/
+            tar czvf ./cfn-guard-v3-aarch64-${{ matrix.os }}.tar.gz ./cfn-guard-v3-aarch64-${{ matrix.os }}
       - name: Upload x86 Release Asset
         id: upload-x86_64-release-asset
         uses: actions/upload-release-asset@v1
@@ -103,6 +110,7 @@ jobs:
           asset_content_type: application/octet-stream
       - name: Upload i686 Release Asset
         id: upload-i686-release-asset
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
