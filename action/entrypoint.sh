@@ -1,5 +1,6 @@
 #!/bin/sh -l
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
 
-echo "Hello $1"
-time=$(date)
-echo "time=$time" >> $GITHUB_OUTPUT
+export PATH="$HOME/.guard/bin:$PATH"
+
+cfn-guard --help
