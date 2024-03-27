@@ -1,7 +1,8 @@
 #!/bin/sh -l
 curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
 export PATH="$HOME/.guard/bin:$PATH"
-github_url="https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$GITHUB_HEAD_REF/comments"
+pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+github_url="https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$pull_number/comments"
 exit_code=0
 
 if ! cfn-guard validate -r $1 -d $2 --output-format sarif  --show-summary none --structured > result.sarif; then
