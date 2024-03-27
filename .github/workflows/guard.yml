@@ -3,8 +3,8 @@ on: [pull_request]
 jobs:
   guard:
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Guard
     steps:
       - name: CFN Guard Action
         id: cfn-guard
-        uses: dannyvassallo/cloudformation-guard@v1.4
+        uses: dannyvassallo/cloudformation-guard@v1.5
