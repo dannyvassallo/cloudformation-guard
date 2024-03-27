@@ -3,4 +3,4 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloud
 
 export PATH="$HOME/.guard/bin:$PATH"
 
-cfn-guard --help
+cfn-guard validate -r $1 -d $2

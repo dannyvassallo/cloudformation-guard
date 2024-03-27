@@ -1,16 +1,15 @@
-# action.yml
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: 'Guard Validate'
+description: 'Validate templates using cfn-guard'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
+  rules:
+    description: 'Rules file or directory'
     required: true
-    default: 'World'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+  data:
+    description: 'Data file or directory'
+    required: true
 runs:
   using: 'docker'
   image: './action/Dockerfile'
   args:
-    - ${{ inputs.who-to-greet }}
+    - ${{ inputs.rules }}
+    - ${{ inputs.data }}
