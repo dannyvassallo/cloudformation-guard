@@ -14,4 +14,9 @@ if ! cfn-guard validate -r $1 -d $2 --output-format junit  --show-summary none -
   cat result.xml
 fi
 
+curl -X POST \
+  -H "Authorization: token $GITHUB_TOKEN" \
+  -d '{"body": "HELLO"}' \
+  "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_BASE_REF/comments"
+
 exit $exit_code
