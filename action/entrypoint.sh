@@ -14,9 +14,12 @@ if ! cfn-guard validate -r $1 -d $2 --output-format junit  --show-summary none -
   cat result.xml
 fi
 
-curl -X POST \
-  -H "Authorization: token $GITHUB_TOKEN" \
-  -d '{"body": "HELLO"}' \
-  "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$GITHUB_BASE_REF/comments"
+curl -L \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$GITHUB_BASE_REF/comments \
+  -d '{"body":"Great stuff!"}'
 
 exit $exit_code
