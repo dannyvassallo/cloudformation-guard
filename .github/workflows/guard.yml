@@ -8,7 +8,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: CFN Guard Action
-        uses: dannyvassallo/cloudformation-guard@v1.03
+        uses: dannyvassallo/cloudformation-guard@v1.04
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'

@@ -17,6 +17,6 @@ fi
 curl -X POST \
   -H "Authorization: token $GITHUB_TOKEN" \
   -d '{"body": "HELLO"}' \
-  "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_BASE_REF/comments"
+  "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$GITHUB_BASE_REF/comments"
 
 exit $exit_code
