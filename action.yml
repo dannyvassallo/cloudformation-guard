@@ -42,3 +42,15 @@ runs:
         check_annotations: false
         detailed_summary: true
         annotate_notice: true
+        check_name: 'CFN Guard Validation Report'
+    - name: Post SARIF findings in the pull request
+      if: github.event_name == 'pull_request'
+      uses: sett-and-hive/sarif-to-comment-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        branch: ${{ github.head_ref }}
+        pr-number: ${{ github.event.number }}
+        sarif-file: result.sarif
+        title: 'CFN Guard Validation Comments'
+        dry-run: false
