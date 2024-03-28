@@ -21,6 +21,7 @@ runs:
         curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
         export PATH="$HOME/.guard/bin:$PATH"
         exit_code=0
+        touch coverage.xml
 
         RULES="${{ inputs.rules }}"
         DATA="${{ inputs.data }}"
