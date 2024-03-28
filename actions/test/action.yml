@@ -31,7 +31,7 @@ runs:
         EXIT_CODE=0
 
         TESTS="${{ inputs.tests }}"
-        DATA="${{ inputs.data }}"
+        RULES="${{ inputs.rules }}"
 
         touch ~/.guard/cfn-guard-junit-result-test.xml
 
