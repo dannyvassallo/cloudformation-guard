@@ -52,7 +52,7 @@ runs:
       with:
         name: Junit Tests            # Name of the check run which will be created
         path: result.xml    # Path to test results
-        reporter: jest-junit
+        reporter: java-junit
     - name: Post SARIF findings in the pull request
       if: github.event_name == 'pull_request'
       uses: sett-and-hive/sarif-to-comment-action@v2.0.1
