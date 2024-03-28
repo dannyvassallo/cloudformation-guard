@@ -48,7 +48,7 @@ runs:
         check_name: 'CFN Guard Validation Report'
     - name: Post SARIF findings in the pull request
       if: github.event_name == 'pull_request'
-      uses: sett-and-hive/sarif-to-comment-action@v1
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
       with:
         token: ${{ inputs.token }}
         repository: ${{ github.repository }}
