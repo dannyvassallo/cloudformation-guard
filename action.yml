@@ -19,12 +19,11 @@ runs:
       id: guard
       shell: bash
       run: |
-        VERSION=${{ env.VERSION:0:1 }}
         mkdir -p ~/.guard/dl
         mkdir -p ~/.guard/bin
-        curl -L -o /tmp/guard.tar.gz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/${{ inputs.version }}/cfn-guard-v$VERSION-ubuntu-latest.tar.gz
+        curl -L -o /tmp/guard.tar.gz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/$VERSION/cfn-guard-v$VERSION:0:1-ubuntu-latest.tar.gz
         tar -C ~/.guard/dl -xzf /tmp/guard.tar.gz
-        ln -sf ~/.guard/dl/cfn-guard-v$VERSION-ubuntu-latest/cfn-guard ~/.guard/bin && ls -l ~/.guard/bin
+        ln -sf ~/.guard/dl/cfn-guard-v$VERSION:0:1-ubuntu-latest/cfn-guard ~/.guard/bin && ls -l ~/.guard/bin
         export PATH="$HOME/.guard/bin:$PATH"
 
         EXIT_CODE=0
