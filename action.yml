@@ -46,6 +46,11 @@ runs:
         detailed_summary: true
         annotate_notice: true
         check_name: 'CFN Guard Validation Report'
+    - name: Custom Reports
+      uses: xportation/junit-coverage-report@main
+      with:
+        github-token: ${{ inputs.token }}
+        junit-path: result.xml
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: success() || failure()    # run this step even if previous step failed
@@ -65,8 +70,3 @@ runs:
         sarif-file: result.sarif
         title: 'CFN Guard Validation Comments'
         dry-run: false
-    - name: Custom Reports
-      uses: xportation/junit-coverage-report@main
-      with:
-        github-token: ${{ inputs.token }}
-        junit-path: result.xml
