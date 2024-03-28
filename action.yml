@@ -22,6 +22,7 @@ runs:
       run: |
         mkdir -p ~/.guard/dl
         mkdir -p ~/.guard/bin
+        VERSION=${{ inputs.version }}
         curl -L -o /tmp/guard.tar.gz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/$VERSION/cfn-guard-v${VERSION:0:1}-ubuntu-latest.tar.gz
         tar -C ~/.guard/dl -xzf /tmp/guard.tar.gz
         ln -sf ~/.guard/dl/cfn-guard-v${VERSION:0:1}-ubuntu-latest/cfn-guard ~/.guard/bin && ls -l ~/.guard/bin
@@ -44,8 +45,6 @@ runs:
 
         exit $EXIT_CODE
       continue-on-error: true
-      env:
-        VERSION: ${{ github.event.inputs.version }}
     - name: Upload SARIF result
       uses: github/codeql-action/upload-sarif@v3
       with:
