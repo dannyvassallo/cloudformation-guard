@@ -14,11 +14,26 @@ runs:
       uses: actions/checkout@v4
     - name: cfn-guard validate
       shell: bash
-      run: './action/entrypoint.sh'
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
+        export PATH="$HOME/.guard/bin:$PATH"
+        exit_code=0
+
+        RULES="${{ inputs.rules }}"
+        DATA="${{ inputs.data }}"
+
+        if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > result.sarif; then
+          exit_code=1
+          cat result.sarif
+        fi
+
+        if ! cfn-guard validate -r $RULES -d $DATA --output-format junit  --show-summary none --structured > result.xml; then
+          exit_code=1
+          cat result.xml
+        fi
+
+        exit $exit_code
       continue-on-error: true
-      env:
-        RULES: ${{ inputs.rules }}
-        DATA: ${{ inputs.data }}
     - name: Publish Validate Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
