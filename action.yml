@@ -39,3 +39,5 @@ runs:
       if: success() || failure()
       with:
         report_paths: '*.xml'
+        check_annotations: false
+        detailed_summary: true
