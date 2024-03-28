@@ -5,10 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Guard
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: CFN Guard Action
-        uses: dannyvassallo/cloudformation-guard@v1.11
+        uses: dannyvassallo/cloudformation-guard@v1.12
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'

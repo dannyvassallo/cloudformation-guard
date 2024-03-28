@@ -8,8 +8,18 @@ inputs:
     description: 'Data file or directory'
     required: true
 runs:
-  using: 'docker'
-  image: './action/Dockerfile'
-  args:
-    - ${{ inputs.rules }}
-    - ${{ inputs.data }}
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: cfn-guard validate
+      shell: bash
+      run: './action/entrypoint.sh'
+      with:
+        rules: ${{ inputs.rules }}
+        data: ${{ inputs.data }}
+    - name: Publish Validate Report
+      uses: mikepenz/action-junit-report@v4
+      if: success() || failure()
+      with:
+        report_paths: '*.xml'
