@@ -19,48 +19,42 @@ runs:
       id: guard
       shell: bash
       run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
+        VERSION=${{ inputs.version:0:1 }}
+        mkdir -p ~/.guard/dl
+        mkdir -p ~/.guard/bin
+        curl -L -o /tmp/guard.tar.gz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/${{ inputs.version }}/cfn-guard-v$VERSION-ubuntu-latest.tar.gz
+        tar -C ~/.guard/dl -xzf /tmp/guard.tar.gz
+        ln -sf ~/.guard/dl/cfn-guard-v$VERSION-ubuntu-latest/cfn-guard ~/.guard/bin && ls -l ~/.guard/bin
         export PATH="$HOME/.guard/bin:$PATH"
-        exit_code=0
-        touch coverage.xml
+
+        EXIT_CODE=0
 
         RULES="${{ inputs.rules }}"
         DATA="${{ inputs.data }}"
 
         if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > result.sarif; then
-          exit_code=1
+          EXIT_CODE=1
           cat result.sarif
         fi
 
         if ! cfn-guard validate -r $RULES -d $DATA --output-format junit  --show-summary none --structured > result.xml; then
-          exit_code=1
+          EXIT_CODE=1
           cat result.xml
         fi
 
-        exit $exit_code
+        exit $EXIT_CODE
+      continue-on-error: true
+    - name: Upload SARIF result
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: result.sarif
       continue-on-error: true
     - name: Publish Validate Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
       with:
         report_paths: '*.xml'
-        # check_annotations: false
+        check_annotations: false
         detailed_summary: true
         annotate_notice: true
         check_name: 'CFN Guard Validation Report'
-    # - name: Post SARIF findings in the pull request
-    #   if: github.event_name == 'pull_request'
-    #   uses: sett-and-hive/sarif-to-comment-action@v2.0.1
-    #   with:
-    #     token: ${{ inputs.token }}
-    #     repository: ${{ github.repository }}
-    #     branch: ${{ github.head_ref }}
-    #     pr-number: ${{ github.event.number }}
-    #     sarif-file: result.sarif
-    #     title: 'CFN Guard Validation Comments'
-    #     dry-run: false
-    # - name: Upload SARIF report
-    #   uses: github/codeql-action/upload-sarif@v3
-    #   with:
-    #     sarif_file: result.sarif
-    #     token: ${{ inputs.token }}

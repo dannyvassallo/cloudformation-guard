@@ -3,11 +3,16 @@ on: [pull_request]
 jobs:
   guard:
     runs-on: ubuntu-latest
+    permissions:
+      # required for all workflows
+      security-events: write
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
     name: Guard
     steps:
       - name: CFN Guard Action
-        uses: dannyvassallo/cloudformation-guard@v1.36
+        uses: dannyvassallo/cloudformation-guard@v1.37
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'
-          token: ${{ secrets.GITHUB_TOKEN }}
