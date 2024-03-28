@@ -45,17 +45,16 @@ runs:
 
         exit $EXIT_CODE
       continue-on-error: true
-    - name: Upload SARIF result
+    - name: Upload CFN Guard SARIF report
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: result.sarif
+        category: cfn-guard-validate
       continue-on-error: true
-    - name: Publish Validate Report
+    - name: Publish CFN Guard JUNIT Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
       with:
         report_paths: '*.xml'
-        check_annotations: false
         detailed_summary: true
-        annotate_notice: true
         check_name: 'CFN Guard Validation Report'
