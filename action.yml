@@ -7,9 +7,10 @@ inputs:
   data:
     description: 'Data file or directory'
     required: true
-  token:
-    description: 'secrets.GITHUB_TOKEN'
-    required: true
+  version:
+    description: 'Guard CLI version'
+    required: false
+    default: '3.1.0'
 runs:
   using: 'composite'
   steps:
