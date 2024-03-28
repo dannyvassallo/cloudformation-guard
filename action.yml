@@ -44,7 +44,7 @@ runs:
       if: success() || failure()
       with:
         report_paths: '*.xml'
-        check_annotations: false
+        # check_annotations: false
         detailed_summary: true
         annotate_notice: true
         check_name: 'CFN Guard Validation Report'
@@ -59,8 +59,8 @@ runs:
     #     sarif-file: result.sarif
     #     title: 'CFN Guard Validation Comments'
     #     dry-run: false
-    - name: Upload SARIF report
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: result.sarif
-        token: ${{ inputs.token }}
+    # - name: Upload SARIF report
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: result.sarif
+    #     token: ${{ inputs.token }}
