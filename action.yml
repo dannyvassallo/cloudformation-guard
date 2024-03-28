@@ -59,8 +59,7 @@ runs:
     #     sarif-file: result.sarif
     #     title: 'CFN Guard Validation Comments'
     #     dry-run: false
-    - name: SARIF Annotator
-      uses: SirYwell/sarif-annotator@v0.1.0
+    - name: Upload SARIF report
+      uses: github/codeql-action/upload-sarif@v3
       with:
-        source: guard
-        report-path: result.sarif
+        sarif_file: results.sarif
