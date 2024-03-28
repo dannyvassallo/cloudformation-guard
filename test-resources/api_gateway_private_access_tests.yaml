@@ -1,0 +1,60 @@
+---
+- input: {}
+  expectations:
+    rules:
+      check_rest_api_is_private: SKIP
+      check_rest_api_has_vpc_access: SKIP
+- input:
+     Resources: {}
+  expectations:
+    rules:
+      check_rest_api_is_private: FAIL
+      check_rest_api_has_vpc_access: SKIP
+- input:
+    Resources:
+      apiGw:
+        Type: AWS::ApiGateway::RestApi
+  expectations:
+    rules:
+      check_rest_api_is_private: FAIL
+      check_rest_api_has_vpc_access: SKIP
+- input:
+    Resources:
+      apiGw:
+        Type: AWS::ApiGateway::RestApi
+        Properties:
+          EndpointConfiguration:
+            Types: PRIVATE
+  expectations:
+    rules:
+      check_rest_api_is_private: PASS
+      check_rest_api_has_vpc_access: FAIL
+- input:
+    Resources:
+      apiGw:
+        Type: AWS::ApiGateway::RestApi
+        Properties:
+          EndpointConfiguration:
+            Types: [PRIVATE, REGIONAL]
+  expectations:
+    rules:
+      check_rest_api_is_private: FAIL
+      check_rest_api_has_vpc_access: SKIP
+- input:
+    Resources:
+      apiGw:
+        Type: AWS::ApiGateway::RestApi
+        Properties:
+          EndpointConfiguration:
+            Types: PRIVATE
+          Policy:
+            Statement:
+              - Action: Allow
+                Resource: '*'
+                Condition:
+                  StringLike:
+                    'aws:sourceVPC': vpc-12345678
+  expectations:
+    rules:
+      check_rest_api_is_private: PASS
+      check_rest_api_has_vpc_access: PASS

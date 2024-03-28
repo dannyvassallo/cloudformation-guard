@@ -4,8 +4,8 @@ inputs:
   tests:
     description: 'Tests file or directory'
     required: true
-  data:
-    description: 'Data file or directory'
+  rules:
+    description: 'Rules file or directory'
     required: true
   version:
     description: 'Guard CLI version'
@@ -35,7 +35,7 @@ runs:
 
         touch ~/.guard/cfn-guard-junit-result-test.xml
 
-        if ! cfn-guard test -t $TESTS -d $DATA --output-format junit > ~/.guard/cfn-guard-junit-result-test.xml; then
+        if ! cfn-guard test -r $RULES -t $TESTS --output-format junit > ~/.guard/cfn-guard-junit-result-test.xml; then
           EXIT_CODE=1
           cat ~/.guard/cfn-guard-junit-result-test.xml
         fi
@@ -47,7 +47,7 @@ runs:
       if: success() || failure()
       with:
         report_paths: '~/.guard/cfn-guard-junit-result-test.xml'
-        check_annotations: false
+        check_annotations: true
         detailed_summary: true
         annotate_notice: true
         check_name: 'CFN Guard Test Report'

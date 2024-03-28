@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       checks: write
-    name: Guard
+    name: Guard Validate
     steps:
       - name: CFN Guard Validate
-        uses: dannyvassallo/cloudformation-guard/actions/validate@v1.46
+        uses: dannyvassallo/cloudformation-guard/actions/validate@v1.47
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'
