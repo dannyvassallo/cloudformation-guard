@@ -1,0 +1,21 @@
+name: CFN Guard Analyze
+
+on:
+  push:
+  schedule:
+    - cron: '45 15 * * 4'
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    name: Guard Analyze
+    steps:
+      - name: CFN Guard Analyze
+        uses: dannyvassallo/cloudformation-guard/actions/analyze@v1.47
+        with:
+          rules: './guard/resources/validate/rules-dir/'
+          data: './guard/resources/validate/data-dir/'
