@@ -12,7 +12,7 @@ jobs:
       security-events: write
       actions: read
       contents: read
-    name: Guard Analyze
+    name: CFN Guard Analyze
     steps:
       - name: CFN Guard Analyze
         uses: dannyvassallo/cloudformation-guard/actions/analyze@v1.49

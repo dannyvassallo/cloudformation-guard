@@ -33,9 +33,11 @@ runs:
         RULES="${{ inputs.rules }}"
         DATA="${{ inputs.data }}"
 
-        if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > ~/.guard/result.sarif; then
+        touch guard-result.sarif
+
+        if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > guard-result.sarif; then
           EXIT_CODE=1
-          cat ~/.guard/result.sarif
+          cat guard-result.sarif
         fi
 
         exit $EXIT_CODE
@@ -43,5 +45,5 @@ runs:
     - name: Upload CFN Guard SARIF report
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: ~/.guard/result.sarif
+        sarif_file: guard-result.sarif
         category: cfn-guard-validate
