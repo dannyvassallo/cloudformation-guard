@@ -1,4 +1,6 @@
-on: [pull_request, push]
+name: Guard Action
+
+on: [pull_request]
 
 jobs:
   guard:

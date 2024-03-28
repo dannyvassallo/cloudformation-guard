@@ -1,4 +1,4 @@
-name: 'Guard Validate'
+name: 'CFN Guard Validate'
 description: 'Validate templates using cfn-guard'
 inputs:
   rules:
@@ -16,7 +16,7 @@ runs:
   steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: cfn-guard validate
+    - name: Validate
       id: guard
       shell: bash
       run: |
@@ -33,29 +33,20 @@ runs:
         RULES="${{ inputs.rules }}"
         DATA="${{ inputs.data }}"
 
-        if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > result.sarif; then
-          EXIT_CODE=1
-          cat result.sarif
-        fi
+        touch cfn-guard-junit-result.xml
 
-        if ! cfn-guard validate -r $RULES -d $DATA --output-format junit  --show-summary none --structured > result.xml; then
+        if ! cfn-guard validate -r $RULES -d $DATA --output-format junit --show-summary none --structured > cfn-guard-junit-result.xml; then
           EXIT_CODE=1
-          cat result.xml
+          cat cfn-guard-junit-result.xml
         fi
 
         exit $EXIT_CODE
       continue-on-error: true
-    - name: Upload CFN Guard SARIF report
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: result.sarif
-        category: cfn-guard-validate
-      continue-on-error: true
-    - name: Publish CFN Guard JUNIT Report
+    - name: Publish JUNIT Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
       with:
-        report_paths: '*.xml'
+        report_paths: 'cfn-guard-junit-result.xml'
         check_annotations: false
         detailed_summary: true
         annotate_notice: true
