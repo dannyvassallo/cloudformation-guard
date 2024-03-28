@@ -3,14 +3,10 @@ on: [pull_request]
 jobs:
   guard:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
     name: Guard
     steps:
       - name: CFN Guard Action
-        uses: dannyvassallo/cloudformation-guard@v1.34
+        uses: dannyvassallo/cloudformation-guard@v1.35
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'
