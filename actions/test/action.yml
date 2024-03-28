@@ -33,11 +33,11 @@ runs:
         TESTS="${{ inputs.tests }}"
         DATA="${{ inputs.data }}"
 
-        touch ~/.guard/cfn-guard-junit-result.xml
+        touch ~/.guard/cfn-guard-junit-result-test.xml
 
-        if ! cfn-guard test -t $TESTS -d $DATA --output-format junit > ~/.guard/cfn-guard-junit-result.xml; then
+        if ! cfn-guard test -t $TESTS -d $DATA --output-format junit > ~/.guard/cfn-guard-junit-result-test.xml; then
           EXIT_CODE=1
-          cat ~/.guard/cfn-guard-junit-result.xml
+          cat ~/.guard/cfn-guard-junit-result-test.xml
         fi
 
         exit $EXIT_CODE
@@ -46,7 +46,7 @@ runs:
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
       with:
-        report_paths: '~/.guard/cfn-guard-junit-result.xml'
+        report_paths: '~/.guard/cfn-guard-junit-result-test.xml'
         check_annotations: false
         detailed_summary: true
         annotate_notice: true
