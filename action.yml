@@ -41,3 +41,4 @@ runs:
         report_paths: '*.xml'
         check_annotations: false
         detailed_summary: true
+        annotate_notice: true
