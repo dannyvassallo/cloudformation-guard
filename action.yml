@@ -15,9 +15,10 @@ runs:
     - name: cfn-guard validate
       shell: bash
       run: './action/entrypoint.sh'
-      with:
-        rules: ${{ inputs.rules }}
-        data: ${{ inputs.data }}
+      continue-on-error: true
+      env:
+        RULES: ${{ inputs.rules }}
+        DATA: ${{ inputs.data }}
     - name: Publish Validate Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()

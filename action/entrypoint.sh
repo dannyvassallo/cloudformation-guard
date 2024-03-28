@@ -3,12 +3,12 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloud
 export PATH="$HOME/.guard/bin:$PATH"
 exit_code=0
 
-if ! cfn-guard validate -r $1 -d $2 --output-format sarif  --show-summary none --structured > result.sarif; then
+if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > result.sarif; then
   exit_code=1
   cat result.sarif
 fi
 
-if ! cfn-guard validate -r $1 -d $2 --output-format junit  --show-summary none --structured > result.xml; then
+if ! cfn-guard validate -r $RULES -d $DATA --output-format junit  --show-summary none --structured > result.xml; then
   exit_code=1
   cat result.xml
 fi
