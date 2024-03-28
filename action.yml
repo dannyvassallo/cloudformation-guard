@@ -46,6 +46,13 @@ runs:
         detailed_summary: true
         annotate_notice: true
         check_name: 'CFN Guard Validation Report'
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: Junit Tests            # Name of the check run which will be created
+        path: result.xml    # Path to test results
+        reporter: junit
     - name: Post SARIF findings in the pull request
       if: github.event_name == 'pull_request'
       uses: sett-and-hive/sarif-to-comment-action@v2.0.1
