@@ -33,11 +33,11 @@ runs:
         RULES="${{ inputs.rules }}"
         DATA="${{ inputs.data }}"
 
-        touch cfn-guard-junit-result.xml
+        touch ~/.guard/cfn-guard-junit-result.xml
 
-        if ! cfn-guard validate -r $RULES -d $DATA --output-format junit --show-summary none --structured > cfn-guard-junit-result.xml; then
+        if ! cfn-guard validate -r $RULES -d $DATA --output-format junit --show-summary none --structured > ~/.guard/cfn-guard-junit-result.xml; then
           EXIT_CODE=1
-          cat cfn-guard-junit-result.xml
+          cat ~/.guard/cfn-guard-junit-result.xml
         fi
 
         exit $EXIT_CODE
@@ -46,7 +46,7 @@ runs:
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
       with:
-        report_paths: 'cfn-guard-junit-result.xml'
+        report_paths: '~/.guard/cfn-guard-junit-result.xml'
         check_annotations: false
         detailed_summary: true
         annotate_notice: true

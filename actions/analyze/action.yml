@@ -1,0 +1,47 @@
+name: 'Guard Validate'
+description: 'Validate templates using cfn-guard'
+inputs:
+  rules:
+    description: 'Rules file or directory'
+    required: true
+  data:
+    description: 'Data file or directory'
+    required: true
+  version:
+    description: 'Guard CLI version'
+    required: false
+    default: '3.1.0'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: cfn-guard validate
+      id: guard
+      shell: bash
+      run: |
+        mkdir -p ~/.guard/dl
+        mkdir -p ~/.guard/bin
+        VERSION=${{ inputs.version }}
+        curl -L -o /tmp/guard.tar.gz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/$VERSION/cfn-guard-v${VERSION:0:1}-ubuntu-latest.tar.gz
+        tar -C ~/.guard/dl -xzf /tmp/guard.tar.gz
+        ln -sf ~/.guard/dl/cfn-guard-v${VERSION:0:1}-ubuntu-latest/cfn-guard ~/.guard/bin && ls -l ~/.guard/bin
+        export PATH="$HOME/.guard/bin:$PATH"
+
+        EXIT_CODE=0
+
+        RULES="${{ inputs.rules }}"
+        DATA="${{ inputs.data }}"
+
+        if ! cfn-guard validate -r $RULES -d $DATA --output-format sarif  --show-summary none --structured > result.sarif; then
+          EXIT_CODE=1
+          cat result.sarif
+        fi
+
+        exit $EXIT_CODE
+      continue-on-error: true
+    - name: Upload CFN Guard SARIF report
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: result.sarif
+        category: cfn-guard-validate
