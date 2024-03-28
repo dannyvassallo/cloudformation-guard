@@ -41,9 +41,9 @@ runs:
         fi
 
         exit $EXIT_CODE
-      continue-on-error: true
     - name: Upload CFN Guard SARIF report
       uses: github/codeql-action/upload-sarif@v3
+      if: ${{ success() }} || ${{ failure() }}
       with:
         sarif_file: guard-result.sarif
         category: cfn-guard-validate

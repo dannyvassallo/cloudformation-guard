@@ -41,7 +41,6 @@ runs:
         fi
 
         exit $EXIT_CODE
-      continue-on-error: true
     - name: Publish JUNIT Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
