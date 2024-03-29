@@ -15,7 +15,7 @@ jobs:
     name: CFN Guard Analyze
     steps:
       - name: CFN Guard Analyze
-        uses: dannyvassallo/cloudformation-guard/actions/analyze@v1.51
+        uses: dannyvassallo/cloudformation-guard/actions/analyze@v1.54
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'
