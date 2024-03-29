@@ -47,3 +47,9 @@ runs:
       with:
         sarif_file: guard-result.sarif
         category: cfn-guard-validate
+    - name: Annotate
+      uses: equisoft-action/sarif-annotator@v1.5.0
+      if: ${{ success() }} || ${{ failure() }}
+      with:
+        sarif-path: guard-result.sarif
+        title: CFN Guard Validate
