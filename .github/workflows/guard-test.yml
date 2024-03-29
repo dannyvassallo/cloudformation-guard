@@ -12,7 +12,7 @@ jobs:
     name: Guard Test
     steps:
       - name: CFN Guard Test
-        uses: dannyvassallo/cloudformation-guard/actions/test@v1.53
+        uses: dannyvassallo/cloudformation-guard/actions/test@v1.57
         with:
           tests: './test-resources/api_gateway_private_access_tests.yaml'
           rules: './test-resources/api_gateway_private_access.guard'

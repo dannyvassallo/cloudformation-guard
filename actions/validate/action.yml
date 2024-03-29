@@ -41,7 +41,7 @@ runs:
         fi
 
         exit $EXIT_CODE
-    - name: Publish JUNIT Report
+    - name: Publish Validate JUNIT Report
       uses: mikepenz/action-junit-report@v4
       if: success() || failure()
       with:
