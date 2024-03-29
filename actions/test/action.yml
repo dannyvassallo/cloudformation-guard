@@ -46,4 +46,7 @@ runs:
       if: success() || failure()
       with:
         report_paths: '~/.guard/cfn-guard-junit-result-test.xml'
+        check_annotations: true
+        detailed_summary: true
+        annotate_notice: true
         check_name: 'CFN Guard Test Report'
