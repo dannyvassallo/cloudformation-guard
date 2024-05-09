@@ -30989,22 +30989,7 @@ async function run() {
         });
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');
-            const mappedResults = run.results.map(({ locations: [location], ruleId, message: { text } }) => [
-                `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
-                text,
-                ruleId
-            ]);
-            await core.summary
-                .addHeading('Validation Failures')
-                .addTable([
-                [
-                    { data: 'File', header: true },
-                    { data: 'Reason', header: true },
-                    { data: 'Rule', header: true }
-                ],
-                ...mappedResults
-            ])
-                .write();
+            let mappedResults;
             if (pull_request) {
                 const tmpComments = run.results.map(result => ({
                     body: result.message.text,
@@ -31025,13 +31010,36 @@ async function run() {
                     pull_number: pull_request.number,
                     comments,
                     event: 'COMMENT',
-                    commit_id: github_1.context.payload.head_commit,
-                    author: {
-                        name: 'cfn-guard',
-                        email: 'no-reply@amazon.com'
-                    }
+                    commit_id: github_1.context.payload.head_commit
                 });
+                mappedResults = run.results
+                    .map(({ locations: [location], ruleId, message: { text } }) => filesWithViolationsInPr.includes(location.physicalLocation.artifactLocation.uri)
+                    ? [
+                        `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+                        text,
+                        ruleId
+                    ]
+                    : [])
+                    .filter(result => result.some(Boolean));
             }
+            else {
+                mappedResults = run.results.map(({ locations: [location], ruleId, message: { text } }) => [
+                    `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+                    text,
+                    ruleId
+                ]);
+            }
+            await core.summary
+                .addHeading('Validation Failures')
+                .addTable([
+                [
+                    { data: 'File', header: true },
+                    { data: 'Reason', header: true },
+                    { data: 'Rule', header: true }
+                ],
+                ...mappedResults
+            ])
+                .write();
         }
     }
     catch (error) {
