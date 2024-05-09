@@ -30965,16 +30965,16 @@ async function run() {
         const repository = github_1.context.payload.repository?.full_name;
         await (0, exec_1.exec)('git init');
         await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
+        await (0, exec_1.exec)('git config --global user.name cfn-guard');
+        await (0, exec_1.exec)('git config --global user.email no-reply@amazon.com');
         if (github_1.context.eventName === 'pull_request') {
             const prRef = `refs/pull/${github_1.context.payload.pull_request?.number}/merge`;
             await (0, exec_1.exec)(`git fetch origin ${prRef}`);
             await (0, exec_1.exec)(`git checkout -qf FETCH_HEAD`);
-            await (0, exec_1.exec)(`ls`);
         }
         else {
             await (0, exec_1.exec)(`git fetch origin ${ref}`);
             await (0, exec_1.exec)(`git checkout FETCH_HEAD`);
-            await (0, exec_1.exec)(`ls`);
         }
     }
     catch (error) {
@@ -31020,18 +31020,16 @@ async function run() {
                 const filesWithViolations = tmpComments.map(({ path }) => path);
                 const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
                 const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
-                console.warn({
-                    filesChanged,
-                    filesWithViolations,
-                    comments,
-                    filesWithViolationsInPr
-                });
                 await octokit.rest.pulls.createReview({
                     ...github_1.context.repo,
                     pull_number: pull_request.number,
                     comments,
-                    event: 'REQUEST_CHANGES',
-                    commit_id: github_1.context.payload.head_commit
+                    event: 'COMMENT',
+                    commit_id: github_1.context.payload.head_commit,
+                    author: {
+                        name: 'cfn-guard',
+                        email: 'no-reply@amazon.com'
+                    }
                 });
             }
         }

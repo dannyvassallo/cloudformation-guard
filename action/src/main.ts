@@ -20,15 +20,15 @@ export async function run(): Promise<void> {
     const repository = context.payload.repository?.full_name
     await exec('git init')
     await exec(`git remote add origin https://github.com/${repository}.git`)
+    await exec('git config --global user.name cfn-guard')
+    await exec('git config --global user.email no-reply@amazon.com')
     if (context.eventName === 'pull_request') {
       const prRef = `refs/pull/${context.payload.pull_request?.number}/merge`
       await exec(`git fetch origin ${prRef}`)
       await exec(`git checkout -qf FETCH_HEAD`)
-      await exec(`ls`)
     } else {
       await exec(`git fetch origin ${ref}`)
       await exec(`git checkout FETCH_HEAD`)
-      await exec(`ls`)
     }
   } catch (error) {
     core.setFailed(`Failed to checkout changes: ${error}`)
@@ -47,6 +47,7 @@ export async function run(): Promise<void> {
 
     if (run.results.length) {
       core.setFailed('Validation failure. CFN Guard found violations.')
+
       const mappedResults: string[][] = run.results.map(
         ({ locations: [location], ruleId, message: { text } }) => [
           `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
@@ -54,6 +55,7 @@ export async function run(): Promise<void> {
           ruleId
         ]
       )
+
       await core.summary
         .addHeading('Validation Failures')
         .addTable([
@@ -72,6 +74,7 @@ export async function run(): Promise<void> {
           path: result.locations[0].physicalLocation.artifactLocation.uri,
           position: result.locations[0].physicalLocation.region.startLine
         }))
+
         const listFiles = await octokit.rest.pulls.listFiles({
           ...context.repo,
           pull_number: pull_request.number,
@@ -86,19 +89,16 @@ export async function run(): Promise<void> {
           filesWithViolationsInPr.includes(comment.path)
         )
 
-        console.warn({
-          filesChanged,
-          filesWithViolations,
-          comments,
-          filesWithViolationsInPr
-        })
-
         await octokit.rest.pulls.createReview({
           ...context.repo,
           pull_number: pull_request.number,
           comments,
-          event: 'REQUEST_CHANGES',
-          commit_id: context.payload.head_commit
+          event: 'COMMENT',
+          commit_id: context.payload.head_commit,
+          author: {
+            name: 'cfn-guard',
+            email: 'no-reply@amazon.com'
+          }
         })
       }
     }
