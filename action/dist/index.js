@@ -30980,24 +30980,29 @@ async function run() {
     try {
         const rulesPath = core.getInput('rules');
         const dataPath = core.getInput('data');
-        const result = await (0, cfn_guard_1.validate)({
+        const { runs: [run] } = await (0, cfn_guard_1.validate)({
             rulesPath,
             dataPath
         });
-        await core.summary
-            .addHeading('Test Results')
-            .addCodeBlock(JSON.stringify(result), 'js')
-            .addTable([
-            [
-                { data: 'File', header: true },
-                { data: 'Result', header: true }
-            ],
-            ['foo.js', 'Pass ✅'],
-            ['bar.js', 'Fail ❌'],
-            ['test.js', 'Pass ✅']
-        ])
-            .addLink('View staging deployment!', 'https://github.com')
-            .write();
+        if (run.results.length) {
+            core.setFailed('Validation failure. CFN Guard found violations.');
+            const mappedResults = run.results.map(({ locations: [location], ruleId }) => [
+                location.physicalLocation.artifactLocation.uri,
+                location.physicalLocation.region.startLine.toString(),
+                ruleId
+            ]);
+            await core.summary
+                .addHeading('Validation Failures')
+                .addTable([
+                [
+                    { data: 'File', header: true },
+                    { data: 'Line', header: true },
+                    { data: 'Rule', header: true }
+                ],
+                ...mappedResults
+            ])
+                .write();
+        }
     }
     catch (error) {
         core.setFailed(`Action failed with error: ${error}`);
