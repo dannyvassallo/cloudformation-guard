@@ -10,8 +10,9 @@ import { validate } from 'cfn-guard'
  */
 export async function run(): Promise<void> {
   try {
-    const ref = github?.context.ref
-    const repository = github?.context.repo?.repo
+    const ref = github.context.ref
+    const repository = github.context.repo.repo
+    console.warn(github.context)
     await exec('git init')
     await exec(`git remote add origin https://github.com/${repository}.git`)
     if (github?.context.eventName === 'pull_request') {

@@ -30961,8 +30961,9 @@ const cfn_guard_1 = __nccwpck_require__(7848);
  */
 async function run() {
     try {
-        const ref = github_1.default?.context.ref;
-        const repository = github_1.default?.context.repo?.repo;
+        const ref = github_1.default.context.ref;
+        const repository = github_1.default.context.repo.repo;
+        console.warn(github_1.default.context);
         await (0, exec_1.exec)('git init');
         await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
         if (github_1.default?.context.eventName === 'pull_request') {
