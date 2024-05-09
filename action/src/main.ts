@@ -37,9 +37,18 @@ export async function run(): Promise<void> {
       dataPath
     })
 
-    console.warn(result)
+    await core.summary
+      .addHeading('Test Results')
+      .addCodeBlock(JSON.stringify(result), "js")
+      .addTable([
+        [{data: 'File', header: true}, {data: 'Result', header: true}],
+        ['foo.js', 'Pass ✅'],
+        ['bar.js', 'Fail ❌'],
+        ['test.js', 'Pass ✅']
+      ])
+      .addLink('View staging deployment!', 'https://github.com')
+      .write()
 
-    core.info(JSON.stringify(result))
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`)
   }
