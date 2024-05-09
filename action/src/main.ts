@@ -67,14 +67,17 @@ export async function run(): Promise<void> {
         .write()
 
       if (pull_request) {
-        run.results.forEach(async result => {
-          await octokit.rest.issues.createComment({
-            ...context.repo,
-            issue_number: pull_request.number,
-            body: result.message.text,
-            path: result.locations[0].physicalLocation.artifactLocation.uri,
-            position: result.locations[0].physicalLocation.region.startLine
-          })
+        const comments = run.results.map(result => ({
+          body: result.message.text,
+          path: result.locations[0].physicalLocation.artifactLocation.uri,
+          position: result.locations[0].physicalLocation.region.startLine
+        }))
+
+        await octokit.rest.pulls.createReview({
+          ...context.repo,
+          pull_number: pull_request.number,
+          comments,
+          event: 'REQUEST_CHANGES'
         })
       }
     }
