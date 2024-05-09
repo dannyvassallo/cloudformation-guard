@@ -31006,7 +31006,7 @@ async function run() {
             ])
                 .write();
             if (pull_request) {
-                const comments = run.results.map(result => ({
+                const tmpComments = run.results.map(result => ({
                     body: result.message.text,
                     path: result.locations[0].physicalLocation.artifactLocation.uri,
                     position: result.locations[0].physicalLocation.region.startLine
@@ -31016,9 +31016,14 @@ async function run() {
                     pull_number: pull_request.number
                 });
                 const filesChanged = listFiles.data.map(({ filename }) => filename);
+                const filesWithViolations = tmpComments.map(({ path }) => path);
+                const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
+                const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
                 console.warn({
                     filesChanged,
-                    filesWithViolations: comments.map(({ path }) => path)
+                    filesWithViolations,
+                    comments,
+                    filesWithViolationsInPr
                 });
                 await octokit.rest.pulls.createReview({
                     ...github_1.context.repo,
