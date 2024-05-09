@@ -1,5 +1,8 @@
 import * as core from '@actions/core'
 import { wait } from './wait'
+import { exec } from '@actions/exec'
+import github from '@actions/github'
+import { validate } from 'cfn-guard'
 
 /**
  * The main function for the action.
@@ -7,20 +10,34 @@ import { wait } from './wait'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
-
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    const ref = github?.context.ref
+    const repository = github?.context.payload.repository?.full_name
+    await exec('git init')
+    await exec(`git remote add origin https://github.com/${repository}.git`)
+    if (github?.context.eventName === 'pull_request') {
+      const prRef = `refs/pull/${github?.context.payload.pull_request?.number}/merge`
+      await exec(`git fetch origin ${prRef}`)
+      await exec(`git checkout -qf FETCH_HEAD`)
+    } else {
+      await exec(`git fetch origin ${ref}`)
+      await exec(`git checkout FETCH_HEAD`)
+      await exec(`ls`)
+    }
   } catch (error) {
-    // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+    core.setFailed(`Action failed with error: ${error}`)
+  }
+
+  try {
+    const rulesPath: string = core.getInput('rules')
+    const dataPath: string = core.getInput('data')
+
+    const result = await validate({
+      rulesPath,
+      dataPath
+    })
+
+    core.setOutput('GUARD', JSON.stringify(result))
+  } catch (error) {
+    core.setFailed(`Action failed with error: ${error}`)
   }
 }
