@@ -30986,9 +30986,9 @@ async function run() {
         });
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');
-            const mappedResults = run.results.map(({ locations: [location], ruleId }) => [
-                location.physicalLocation.artifactLocation.uri,
-                location.physicalLocation.region.startLine.toString(),
+            const mappedResults = run.results.map(({ locations: [location], ruleId, message: { text } }) => [
+                `${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+                text,
                 ruleId
             ]);
             await core.summary
@@ -30996,7 +30996,7 @@ async function run() {
                 .addTable([
                 [
                     { data: 'File', header: true },
-                    { data: 'Line', header: true },
+                    { data: 'Reason', header: true },
                     { data: 'Rule', header: true }
                 ],
                 ...mappedResults
