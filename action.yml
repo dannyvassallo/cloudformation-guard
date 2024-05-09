@@ -1,24 +1,25 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'CFN Guard GitHub Action'
+description: 'Validate templates using CFN Guard'
+author: 'Amazon Web Services'
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
   icon: 'heart'
   color: 'red'
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  rules:
+    description: 'rules path'
     required: true
-    default: '1000'
+    default: '.'
+  data:
+    description: 'data path'
+    required: true
+    default: '.'
 
-# Define your outputs here.
-outputs:
-  time:
-    description: 'Your output description here'
+# outputs:
+#   time:
+#     description: 'Your output description here'
 
 runs:
   using: node20
-  main: action/dist/index.js
+  main: ./action/dist/index.js
