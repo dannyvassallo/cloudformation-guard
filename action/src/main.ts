@@ -10,20 +10,20 @@ import { validate } from 'cfn-guard'
  */
 export async function run(): Promise<void> {
   try {
-    const ref = github.context.ref
-    const repository = github.context.repo.repo
+    // const ref = github.context.ref
+    // const repository = github.context.repo.repo
     console.warn(github.context)
-    await exec('git init')
-    await exec(`git remote add origin https://github.com/${repository}.git`)
-    if (github?.context.eventName === 'pull_request') {
-      const prRef = `refs/pull/${github?.context.payload.pull_request?.number}/merge`
-      await exec(`git fetch origin ${prRef}`)
-      await exec(`git checkout -qf FETCH_HEAD`)
-    } else {
-      await exec(`git fetch origin ${ref}`)
-      await exec(`git checkout FETCH_HEAD`)
-      await exec(`ls`)
-    }
+    // await exec('git init')
+    // await exec(`git remote add origin https://github.com/${repository}.git`)
+    // if (github?.context.eventName === 'pull_request') {
+    //   const prRef = `refs/pull/${github?.context.payload.pull_request?.number}/merge`
+    //   await exec(`git fetch origin ${prRef}`)
+    //   await exec(`git checkout -qf FETCH_HEAD`)
+    // } else {
+    //   await exec(`git fetch origin ${ref}`)
+    //   await exec(`git checkout FETCH_HEAD`)
+    //   await exec(`ls`)
+    // }
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`)
   }
