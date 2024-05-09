@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 // import { wait } from './wait'
 import { exec } from '@actions/exec'
-import github from '@actions/github'
+import { context } from '@actions/github'
 import { validate } from 'cfn-guard'
 
 /**
@@ -12,7 +12,7 @@ export async function run(): Promise<void> {
   try {
     // const ref = github.context.ref
     // const repository = github.context.repo.repo
-    console.warn(github.context)
+    console.warn(context)
     // await exec('git init')
     // await exec(`git remote add origin https://github.com/${repository}.git`)
     // if (github?.context.eventName === 'pull_request') {

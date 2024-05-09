@@ -29714,13 +29714,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const github_1 = __importDefault(__nccwpck_require__(5438));
+const github_1 = __nccwpck_require__(5438);
 const cfn_guard_1 = __nccwpck_require__(7848);
 /**
  * The main function for the action.
@@ -29730,7 +29727,7 @@ async function run() {
     try {
         // const ref = github.context.ref
         // const repository = github.context.repo.repo
-        console.warn(github_1.default.context);
+        console.warn(github_1.context);
         // await exec('git init')
         // await exec(`git remote add origin https://github.com/${repository}.git`)
         // if (github?.context.eventName === 'pull_request') {
