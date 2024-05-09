@@ -73,6 +73,16 @@ export async function run(): Promise<void> {
           position: result.locations[0].physicalLocation.region.startLine
         }))
 
+        const filesChanged = octokit.rest.pulls.listFiles({
+          ...context.repo,
+          pull_number: pull_request.number
+        })
+
+        console.warn({
+          filesChanged,
+          filesWithViolations: comments.map(({ path }) => path)
+        })
+
         await octokit.rest.pulls.createReview({
           ...context.repo,
           pull_number: pull_request.number,
