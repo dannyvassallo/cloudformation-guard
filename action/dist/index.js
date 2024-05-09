@@ -31011,7 +31011,7 @@ async function run() {
                     path: result.locations[0].physicalLocation.artifactLocation.uri,
                     position: result.locations[0].physicalLocation.region.startLine
                 }));
-                const filesChanged = octokit.rest.pulls.listFiles({
+                const filesChanged = await octokit.rest.pulls.listFiles({
                     ...github_1.context.repo,
                     pull_number: pull_request.number
                 });
