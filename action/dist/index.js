@@ -30984,8 +30984,20 @@ async function run() {
             rulesPath,
             dataPath
         });
-        console.warn(result);
-        core.info(JSON.stringify(result));
+        await core.summary
+            .addHeading('Test Results')
+            .addCodeBlock(JSON.stringify(result), 'js')
+            .addTable([
+            [
+                { data: 'File', header: true },
+                { data: 'Result', header: true }
+            ],
+            ['foo.js', 'Pass ✅'],
+            ['bar.js', 'Fail ❌'],
+            ['test.js', 'Pass ✅']
+        ])
+            .addLink('View staging deployment!', 'https://github.com')
+            .write();
     }
     catch (error) {
         core.setFailed(`Action failed with error: ${error}`);

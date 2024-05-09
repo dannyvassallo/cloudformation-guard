@@ -39,16 +39,18 @@ export async function run(): Promise<void> {
 
     await core.summary
       .addHeading('Test Results')
-      .addCodeBlock(JSON.stringify(result), "js")
+      .addCodeBlock(JSON.stringify(result), 'js')
       .addTable([
-        [{data: 'File', header: true}, {data: 'Result', header: true}],
+        [
+          { data: 'File', header: true },
+          { data: 'Result', header: true }
+        ],
         ['foo.js', 'Pass ✅'],
         ['bar.js', 'Fail ❌'],
         ['test.js', 'Pass ✅']
       ])
       .addLink('View staging deployment!', 'https://github.com')
       .write()
-
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`)
   }
