@@ -30952,6 +30952,8 @@ const core = __importStar(__nccwpck_require__(2186));
 const exec_1 = __nccwpck_require__(1514);
 const github_1 = __nccwpck_require__(5438);
 const cfn_guard_1 = __nccwpck_require__(7848);
+const fs_1 = __nccwpck_require__(7147);
+const sarifToFile = (obj, filename) => (0, fs_1.writeFileSync)(`/tmp/${filename}.sarif`, JSON.stringify(obj, null, 2));
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -30960,15 +30962,16 @@ async function run() {
     const token = core.getInput('token');
     const octokit = (0, github_1.getOctokit)(token);
     const { pull_request } = github_1.context.payload;
+    let ref = github_1.context.payload.ref;
+    const repository = github_1.context.payload.repository?.full_name;
     try {
-        const ref = github_1.context.payload.ref;
-        const repository = github_1.context.payload.repository?.full_name;
         await (0, exec_1.exec)('git init');
         await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
         await (0, exec_1.exec)('git config --global user.name cfn-guard');
         await (0, exec_1.exec)('git config --global user.email no-reply@amazon.com');
         if (github_1.context.eventName === 'pull_request') {
             const prRef = `refs/pull/${github_1.context.payload.pull_request?.number}/merge`;
+            ref = prRef;
             await (0, exec_1.exec)(`git fetch origin ${prRef}`);
             await (0, exec_1.exec)(`git checkout -qf FETCH_HEAD`);
         }
@@ -30983,10 +30986,18 @@ async function run() {
     try {
         const rulesPath = core.getInput('rules');
         const dataPath = core.getInput('data');
-        const { runs: [run] } = await (0, cfn_guard_1.validate)({
+        const result = await (0, cfn_guard_1.validate)({
             rulesPath,
             dataPath
         });
+        sarifToFile(result, 'cfn-guard-report');
+        await (0, exec_1.exec)(`
+      codeql github upload-results \
+        --repository=${repository} \
+        --ref=${ref} --commit=${github_1.context.payload.head_commit} \
+        --sarif=/tmp/cfn-guard-report.sarif
+    `);
+        const { runs: [run] } = result;
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');
             let mappedResults;

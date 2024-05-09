@@ -3,8 +3,11 @@ import { SummaryTableCell } from '@actions/core/lib/summary'
 // import { wait } from './wait'
 import { exec } from '@actions/exec'
 import { context, getOctokit } from '@actions/github'
-import { validate } from 'cfn-guard'
+import { SarifReport, validate } from 'cfn-guard'
+import { writeFileSync } from 'fs'
 
+const sarifToFile = (obj: SarifReport, filename: string) =>
+  writeFileSync(`/tmp/${filename}.sarif`, JSON.stringify(obj, null, 2))
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -14,16 +17,17 @@ export async function run(): Promise<void> {
   const octokit = getOctokit(token)
 
   const { pull_request } = context.payload
+  let ref = context.payload.ref
+  const repository = context.payload.repository?.full_name
 
   try {
-    const ref = context.payload.ref
-    const repository = context.payload.repository?.full_name
     await exec('git init')
     await exec(`git remote add origin https://github.com/${repository}.git`)
     await exec('git config --global user.name cfn-guard')
     await exec('git config --global user.email no-reply@amazon.com')
     if (context.eventName === 'pull_request') {
       const prRef = `refs/pull/${context.payload.pull_request?.number}/merge`
+      ref = prRef
       await exec(`git fetch origin ${prRef}`)
       await exec(`git checkout -qf FETCH_HEAD`)
     } else {
@@ -38,12 +42,23 @@ export async function run(): Promise<void> {
     const rulesPath: string = core.getInput('rules')
     const dataPath: string = core.getInput('data')
 
-    const {
-      runs: [run]
-    } = await validate({
+    const result = await validate({
       rulesPath,
       dataPath
     })
+
+    sarifToFile(result, 'cfn-guard-report')
+
+    await exec(`
+      codeql github upload-results \
+        --repository=${repository} \
+        --ref=${ref} --commit=${context.payload.head_commit} \
+        --sarif=/tmp/cfn-guard-report.sarif
+    `)
+
+    const {
+      runs: [run]
+    } = result
 
     if (run.results.length) {
       core.setFailed('Validation failure. CFN Guard found violations.')
