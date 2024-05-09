@@ -5,10 +5,7 @@ on: [pull_request, push]
 jobs:
   guard:
     runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      actions: read
-      contents: read
+    permissions: write-all
     name: Guard Validate
     steps:
       - name: CFN Guard Validate
