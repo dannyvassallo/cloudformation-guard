@@ -74,7 +74,8 @@ export async function run(): Promise<void> {
         }))
         const listFiles = await octokit.rest.pulls.listFiles({
           ...context.repo,
-          pull_number: pull_request.number
+          pull_number: pull_request.number,
+          per_page: 3000
         })
         const filesChanged = listFiles.data.map(({ filename }) => filename)
         const filesWithViolations = tmpComments.map(({ path }) => path)
