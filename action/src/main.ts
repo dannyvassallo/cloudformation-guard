@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import { SummaryTableCell } from '@actions/core/lib/summary'
 // import { wait } from './wait'
 import { exec } from '@actions/exec'
-import { context } from '@actions/github'
+import { context, getOctokit } from '@actions/github'
 import { validate } from 'cfn-guard'
 
 /**
@@ -10,6 +10,11 @@ import { validate } from 'cfn-guard'
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
+  const token = core.getInput('token')
+  const octokit = getOctokit(token)
+
+  const { pull_request } = context.payload
+
   try {
     const ref = context.payload.ref
     const repository = context.payload.repository?.full_name
@@ -60,6 +65,18 @@ export async function run(): Promise<void> {
           ...mappedResults
         ])
         .write()
+
+      if (pull_request) {
+        run.results.forEach(async result => {
+          await octokit.rest.issues.createComment({
+            ...context.repo,
+            issue_number: pull_request.number,
+            body: result.message.text,
+            path: result.locations[0].physicalLocation.artifactLocation.uri,
+            position: result.locations[0].physicalLocation.region.startLine
+          })
+        })
+      }
     }
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`)

@@ -30957,6 +30957,9 @@ const cfn_guard_1 = __nccwpck_require__(7848);
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
+    const token = core.getInput('token');
+    const octokit = (0, github_1.getOctokit)(token);
+    const { pull_request } = github_1.context.payload;
     try {
         const ref = github_1.context.payload.ref;
         const repository = github_1.context.payload.repository?.full_name;
@@ -30987,7 +30990,7 @@ async function run() {
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');
             const mappedResults = run.results.map(({ locations: [location], ruleId, message: { text } }) => [
-                `${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+                `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
                 text,
                 ruleId
             ]);
@@ -31002,6 +31005,17 @@ async function run() {
                 ...mappedResults
             ])
                 .write();
+            if (pull_request) {
+                run.results.forEach(async (result) => {
+                    await octokit.rest.issues.createComment({
+                        ...github_1.context.repo,
+                        issue_number: pull_request.number,
+                        body: result.message.text,
+                        path: result.locations[0].physicalLocation.artifactLocation.uri,
+                        position: result.locations[0].physicalLocation.region.startLine
+                    });
+                });
+            }
         }
     }
     catch (error) {
