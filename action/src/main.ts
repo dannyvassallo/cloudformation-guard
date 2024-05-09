@@ -73,10 +73,12 @@ export async function run(): Promise<void> {
           position: result.locations[0].physicalLocation.region.startLine
         }))
 
-        const filesChanged = await octokit.rest.pulls.listFiles({
+        const listFiles = await octokit.rest.pulls.listFiles({
           ...context.repo,
           pull_number: pull_request.number
         })
+
+        const filesChanged = listFiles.data.map(({ filename }) => filename)
 
         console.warn({
           filesChanged,
