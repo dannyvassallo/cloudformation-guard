@@ -77,7 +77,8 @@ export async function run(): Promise<void> {
           ...context.repo,
           pull_number: pull_request.number,
           comments,
-          event: 'REQUEST_CHANGES'
+          event: 'REQUEST_CHANGES',
+          commit_id: context.payload.head_commit
         })
       }
     }

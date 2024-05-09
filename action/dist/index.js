@@ -31015,7 +31015,8 @@ async function run() {
                     ...github_1.context.repo,
                     pull_number: pull_request.number,
                     comments,
-                    event: 'REQUEST_CHANGES'
+                    event: 'REQUEST_CHANGES',
+                    commit_id: github_1.context.payload.head_commit
                 });
             }
         }
