@@ -30951,6 +30951,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+// import { wait } from './wait'
 const exec_1 = __nccwpck_require__(1514);
 const github_1 = __importDefault(__nccwpck_require__(5438));
 const cfn_guard_1 = __nccwpck_require__(7848);
@@ -30961,7 +30962,7 @@ const cfn_guard_1 = __nccwpck_require__(7848);
 async function run() {
     try {
         const ref = github_1.default?.context.ref;
-        const repository = github_1.default?.context.payload.repository?.full_name;
+        const repository = github_1.default?.context.repo?.repo;
         await (0, exec_1.exec)('git init');
         await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
         if (github_1.default?.context.eventName === 'pull_request') {
