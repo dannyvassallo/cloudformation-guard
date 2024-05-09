@@ -30984,7 +30984,8 @@ async function run() {
             rulesPath,
             dataPath
         });
-        core.setOutput('GUARD', JSON.stringify(result));
+        console.warn(result);
+        core.info(JSON.stringify(result));
     }
     catch (error) {
         core.setFailed(`Action failed with error: ${error}`);

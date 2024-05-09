@@ -37,6 +37,8 @@ export async function run(): Promise<void> {
       dataPath
     })
 
+    console.warn(result)
+
     core.info(JSON.stringify(result))
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`)
