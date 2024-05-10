@@ -30954,11 +30954,13 @@ const cfn_guard_1 = __nccwpck_require__(7848);
 const { Buffer } = __nccwpck_require__(4300);
 const zlib = __nccwpck_require__(9796);
 const compressAndEncode = async (input) => {
+    console.warn(input);
     const byteArray = Buffer.from(input, 'utf8');
     const gzip = zlib.createGzip();
     const compressedData = await new Promise((resolve, reject) => {
         const chunks = [];
         gzip.on('data', (chunk) => {
+            console.warn(chunk);
             chunks.push(chunk);
         });
         gzip.on('end', () => {
@@ -31033,8 +31035,7 @@ async function run() {
                 'X-GitHub-Api-Version': '2022-11-28'
             }
         };
-        console.warn(codeqlParams);
-        await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', codeqlParams);
+        const codeQlResult = await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', codeqlParams);
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');
             let mappedResults;
@@ -31087,6 +31088,7 @@ async function run() {
                 ],
                 ...mappedResults
             ])
+                .addLink('View code scanning result on github', codeQlResult.url)
                 .write();
         }
     }

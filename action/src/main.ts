@@ -6,6 +6,7 @@ const { Buffer } = require('buffer')
 const zlib = require('zlib')
 
 const compressAndEncode = async (input: string): Promise<string> => {
+  console.warn(input)
   const byteArray = Buffer.from(input, 'utf8')
   const gzip = zlib.createGzip()
 
@@ -13,6 +14,7 @@ const compressAndEncode = async (input: string): Promise<string> => {
     const chunks: Buffer[] = []
 
     gzip.on('data', (chunk: Buffer) => {
+      console.warn(chunk)
       chunks.push(chunk)
     })
 
@@ -101,8 +103,7 @@ export async function run(): Promise<void> {
       }
     }
 
-    console.warn(codeqlParams)
-    await octokit.request(
+    const codeQlResult = await octokit.request(
       'POST /repos/{owner}/{repo}/code-scanning/sarifs',
       codeqlParams
     )
@@ -178,6 +179,7 @@ export async function run(): Promise<void> {
           ],
           ...mappedResults
         ])
+        .addLink('View code scanning result on github', codeQlResult.url)
         .write()
     }
   } catch (error) {
