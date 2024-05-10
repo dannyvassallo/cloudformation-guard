@@ -1,13 +1,15 @@
 import * as core from '@actions/core'
-import { SummaryTableCell } from '@actions/core/lib/summary'
-// import { wait } from './wait'
 import { exec } from '@actions/exec'
 import { context, getOctokit } from '@actions/github'
 import { SarifReport, validate } from 'cfn-guard'
-import { writeFileSync } from 'fs'
+import { writeFileSync, createReadStream } from 'fs'
+import zlib from 'zlib'
+import { Base64Encode } from 'base64-stream'
+
+declare function require(moduleName: string): any
 
 const sarifToFile = (obj: SarifReport, filename: string) =>
-  writeFileSync(`/tmp/${filename}.sarif`, JSON.stringify(obj, null, 2))
+  writeFileSync(filename, JSON.stringify(obj, null, 2))
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -47,14 +49,35 @@ export async function run(): Promise<void> {
       dataPath
     })
 
-    sarifToFile(result, 'cfn-guard-report')
+    const inputFile = `/tmp/guard-report-${new Date().getTime()}.sarif`
+    sarifToFile(result, inputFile)
+    let outputBuffer = Buffer.alloc(0)
 
-    await exec(`
-      codeql github upload-results \
-        --repository=${repository} \
-        --ref=${ref} --commit=${context.payload.head_commit} \
-        --sarif=/tmp/cfn-guard-report.sarif
-    `)
+    const readStream = createReadStream(inputFile)
+    const gzip = zlib.createGzip()
+
+    readStream
+      .pipe(gzip)
+      .pipe(new Base64Encode())
+      .on('data', (chunk: Uint8Array) => {
+        outputBuffer = Buffer.concat([outputBuffer, chunk])
+      })
+      .on('end', () => {
+        console.log(outputBuffer.toString('utf8'))
+      })
+      .on('error', (err: Error) => {
+        console.error('Error:', err)
+      })
+
+    await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
+      ...context.repo,
+      commit_sha: context.payload.head_commit,
+      ref,
+      sarif: outputBuffer.toString(),
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    })
 
     const {
       runs: [run]
