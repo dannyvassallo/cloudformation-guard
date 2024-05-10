@@ -93,7 +93,7 @@ export async function run(): Promise<void> {
 
     const codeqlParams = {
       ...context.repo,
-      commit_sha: context.payload.head_commit,
+      commit_sha: context.payload.head_commit.id,
       ref,
       sarif: await compressAndEncode(JSON.stringify(result)),
       headers: {

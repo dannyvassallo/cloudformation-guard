@@ -31026,7 +31026,7 @@ async function run() {
         const { runs: [run] } = result;
         const codeqlParams = {
             ...github_1.context.repo,
-            commit_sha: github_1.context.payload.head_commit,
+            commit_sha: github_1.context.payload.head_commit.id,
             ref,
             sarif: await compressAndEncode(JSON.stringify(result)),
             headers: {
