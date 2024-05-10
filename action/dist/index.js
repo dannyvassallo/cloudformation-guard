@@ -31088,7 +31088,7 @@ async function run() {
                 ],
                 ...mappedResults
             ])
-                .addLink('View code scanning result on github', codeQlResult.url)
+                .addLink('View code scanning result on github', codeQlResult?.data?.url ?? '#')
                 .write();
         }
     }

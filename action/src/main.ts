@@ -179,7 +179,10 @@ export async function run(): Promise<void> {
           ],
           ...mappedResults
         ])
-        .addLink('View code scanning result on github', codeQlResult.url)
+        .addLink(
+          'View code scanning result on github',
+          codeQlResult?.data?.url ?? '#'
+        )
         .write()
     }
   } catch (error) {
