@@ -9,7 +9,7 @@ jobs:
     name: Guard Validate
     steps:
       - name: CFN Guard Validate
-        uses: dannyvassallo/cloudformation-guard@action-v0.0.024
+        uses: dannyvassallo/cloudformation-guard@action-v0.0.025
         with:
           rules: './guard/resources/validate/rules-dir/'
           data: './guard/resources/validate/data-dir/'

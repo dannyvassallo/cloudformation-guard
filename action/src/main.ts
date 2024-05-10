@@ -50,7 +50,9 @@ export async function run(): Promise<void> {
     })
 
     const inputFile = `/tmp/guard-report-${new Date().getTime()}.sarif`
+
     sarifToFile(result, inputFile)
+
     let outputBuffer = Buffer.alloc(0)
 
     const readStream = createReadStream(inputFile)
