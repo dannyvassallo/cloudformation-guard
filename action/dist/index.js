@@ -30952,6 +30952,29 @@ const core = __importStar(__nccwpck_require__(2186));
 const exec_1 = __nccwpck_require__(1514);
 const github_1 = __nccwpck_require__(5438);
 const cfn_guard_1 = __nccwpck_require__(7848);
+const compress = async (string) => {
+    const blobToBase64 = async (blob) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = error => {
+                reject(error);
+            };
+            reader.readAsDataURL(blob);
+        });
+    };
+    const byteArray = new TextEncoder().encode(string);
+    const cs = new CompressionStream('gzip');
+    const writer = cs.writable.getWriter();
+    writer.write(byteArray);
+    writer.close();
+    const response = new Response(cs.readable).blob();
+    const base64 = await blobToBase64(await response);
+    return base64;
+};
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -30959,10 +30982,10 @@ const cfn_guard_1 = __nccwpck_require__(7848);
 async function run() {
     const token = core.getInput('token');
     const octokit = (0, github_1.getOctokit)(token);
+    const ref = github_1.context.payload.ref;
+    const repository = github_1.context.payload.repository?.full_name;
     const { pull_request } = github_1.context.payload;
     try {
-        const ref = github_1.context.payload.ref;
-        const repository = github_1.context.payload.repository?.full_name;
         await (0, exec_1.exec)('git init');
         await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
         await (0, exec_1.exec)('git config --global user.name cfn-guard');
@@ -30983,9 +31006,19 @@ async function run() {
     try {
         const rulesPath = core.getInput('rules');
         const dataPath = core.getInput('data');
-        const { runs: [run] } = await (0, cfn_guard_1.validate)({
+        const result = await (0, cfn_guard_1.validate)({
             rulesPath,
             dataPath
+        });
+        const { runs: [run] } = result;
+        await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
+            ...github_1.context.repo,
+            commit_sha: github_1.context.payload.head_commit,
+            ref,
+            sarif: await compress(JSON.stringify(result)),
+            headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
         });
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');

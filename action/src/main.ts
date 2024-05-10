@@ -8,27 +8,27 @@ import { validate } from 'cfn-guard'
 const compress = async (string: string): Promise<string> => {
   const blobToBase64 = async (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onload = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = (error) => {
-        reject(error);
-      };
-      reader.readAsDataURL(blob);
-    });
-  };
-  const byteArray = new TextEncoder().encode(string);
-  const cs = new CompressionStream('gzip');
-  const writer = cs.writable.getWriter();
-  writer.write(byteArray);
-  writer.close();
-  const response = new Response(cs.readable).blob();
-  const base64 = await blobToBase64(await response);
+        const base64 = (reader.result as string).split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = error => {
+        reject(error)
+      }
+      reader.readAsDataURL(blob)
+    })
+  }
+  const byteArray = new TextEncoder().encode(string)
+  const cs = new CompressionStream('gzip')
+  const writer = cs.writable.getWriter()
+  writer.write(byteArray)
+  writer.close()
+  const response = new Response(cs.readable).blob()
+  const base64 = await blobToBase64(await response)
 
-  return base64;
-};
+  return base64
+}
 
 /**
  * The main function for the action.
