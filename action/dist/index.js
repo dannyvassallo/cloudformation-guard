@@ -30948,32 +30948,44 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-// import { wait } from './wait'
 const exec_1 = __nccwpck_require__(1514);
 const github_1 = __nccwpck_require__(5438);
 const cfn_guard_1 = __nccwpck_require__(7848);
-const compress = async (string) => {
-    const blobToBase64 = async (blob) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const base64 = reader.result.split(',')[1];
-                resolve(base64);
-            };
-            reader.onerror = error => {
-                reject(error);
-            };
-            reader.readAsDataURL(blob);
+const { Buffer } = __nccwpck_require__(4300);
+const zlib = __nccwpck_require__(9796);
+const compressAndEncode = async (input) => {
+    const byteArray = Buffer.from(input, 'utf8');
+    const gzip = zlib.createGzip();
+    const compressedData = await new Promise((resolve, reject) => {
+        const chunks = [];
+        const compressed = byteArray.pipe(gzip);
+        compressed.on('data', (chunk) => {
+            chunks.push(chunk);
         });
-    };
-    const byteArray = new TextEncoder().encode(string);
-    const cs = new CompressionStream('gzip');
-    const writer = cs.writable.getWriter();
-    writer.write(byteArray);
-    writer.close();
-    const response = new Response(cs.readable).blob();
-    const base64 = await blobToBase64(await response);
+        compressed.on('end', () => {
+            resolve(Buffer.concat(chunks));
+        });
+        compressed.on('error', (error) => {
+            reject(error);
+        });
+    });
+    const base64 = await blobToBase64(compressedData);
     return base64;
+};
+const blobToBase64 = async (blob) => {
+    const reader = new ((__nccwpck_require__(2781).Readable))();
+    reader._read = () => { }; // _read is required but you can noop it
+    reader.push(blob);
+    reader.push(null);
+    return new Promise((resolve, reject) => {
+        reader.on('data', (chunk) => {
+            const base64 = chunk.toString('base64');
+            resolve(base64);
+        });
+        reader.on('error', (error) => {
+            reject(error);
+        });
+    });
 };
 /**
  * The main function for the action.
@@ -31015,7 +31027,7 @@ async function run() {
             ...github_1.context.repo,
             commit_sha: github_1.context.payload.head_commit,
             ref,
-            sarif: await compress(JSON.stringify(result)),
+            sarif: await compressAndEncode(JSON.stringify(result)),
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
             }

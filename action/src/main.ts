@@ -1,33 +1,51 @@
 import * as core from '@actions/core'
-import { SummaryTableCell } from '@actions/core/lib/summary'
-// import { wait } from './wait'
 import { exec } from '@actions/exec'
 import { context, getOctokit } from '@actions/github'
 import { validate } from 'cfn-guard'
+const { Buffer } = require('buffer')
+const zlib = require('zlib')
 
-const compress = async (string: string): Promise<string> => {
-  const blobToBase64 = async (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const base64 = (reader.result as string).split(',')[1]
-        resolve(base64)
-      }
-      reader.onerror = error => {
-        reject(error)
-      }
-      reader.readAsDataURL(blob)
+const compressAndEncode = async (input: string): Promise<string> => {
+  const byteArray = Buffer.from(input, 'utf8')
+  const gzip = zlib.createGzip()
+
+  const compressedData = await new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = []
+
+    const compressed = byteArray.pipe(gzip)
+    compressed.on('data', (chunk: Buffer) => {
+      chunks.push(chunk)
     })
-  }
-  const byteArray = new TextEncoder().encode(string)
-  const cs = new CompressionStream('gzip')
-  const writer = cs.writable.getWriter()
-  writer.write(byteArray)
-  writer.close()
-  const response = new Response(cs.readable).blob()
-  const base64 = await blobToBase64(await response)
 
+    compressed.on('end', () => {
+      resolve(Buffer.concat(chunks))
+    })
+
+    compressed.on('error', (error: Error) => {
+      reject(error)
+    })
+  })
+
+  const base64 = await blobToBase64(compressedData)
   return base64
+}
+
+const blobToBase64 = async (blob: Buffer): Promise<string> => {
+  const reader = new (require('stream').Readable)()
+  reader._read = () => {} // _read is required but you can noop it
+  reader.push(blob)
+  reader.push(null)
+
+  return new Promise<string>((resolve, reject) => {
+    reader.on('data', (chunk: Buffer) => {
+      const base64 = chunk.toString('base64')
+      resolve(base64)
+    })
+
+    reader.on('error', (error: Error) => {
+      reject(error)
+    })
+  })
 }
 
 /**
@@ -75,7 +93,7 @@ export async function run(): Promise<void> {
       ...context.repo,
       commit_sha: context.payload.head_commit,
       ref,
-      sarif: await compress(JSON.stringify(result)),
+      sarif: await compressAndEncode(JSON.stringify(result)),
       headers: {
         'X-GitHub-Api-Version': '2022-11-28'
       }
