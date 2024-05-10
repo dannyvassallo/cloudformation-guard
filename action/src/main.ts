@@ -91,7 +91,7 @@ export async function run(): Promise<void> {
       runs: [run]
     } = result
 
-    await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
+    const codeqlParams = {
       ...context.repo,
       commit_sha: context.payload.head_commit,
       ref,
@@ -99,7 +99,13 @@ export async function run(): Promise<void> {
       headers: {
         'X-GitHub-Api-Version': '2022-11-28'
       }
-    })
+    }
+
+    console.warn(codeqlParams)
+    await octokit.request(
+      'POST /repos/{owner}/{repo}/code-scanning/sarifs',
+      codeqlParams
+    )
 
     if (run.results.length) {
       core.setFailed('Validation failure. CFN Guard found violations.')

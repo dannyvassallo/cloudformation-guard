@@ -31024,7 +31024,7 @@ async function run() {
             dataPath
         });
         const { runs: [run] } = result;
-        await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
+        const codeqlParams = {
             ...github_1.context.repo,
             commit_sha: github_1.context.payload.head_commit,
             ref,
@@ -31032,7 +31032,9 @@ async function run() {
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
             }
-        });
+        };
+        console.warn(codeqlParams);
+        await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', codeqlParams);
         if (run.results.length) {
             core.setFailed('Validation failure. CFN Guard found violations.');
             let mappedResults;
