@@ -1,15 +1,35 @@
 import * as core from '@actions/core'
+import { SummaryTableCell } from '@actions/core/lib/summary'
+// import { wait } from './wait'
 import { exec } from '@actions/exec'
 import { context, getOctokit } from '@actions/github'
-import { SarifReport, validate } from 'cfn-guard'
-import { writeFileSync, createReadStream } from 'fs'
-import zlib from 'zlib'
-import { Base64Encode } from 'base64-stream'
+import { validate } from 'cfn-guard'
 
-declare function require(moduleName: string): any
+const compress = async (string: string): Promise<string> => {
+  const blobToBase64 = async (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsDataURL(blob);
+    });
+  };
+  const byteArray = new TextEncoder().encode(string);
+  const cs = new CompressionStream('gzip');
+  const writer = cs.writable.getWriter();
+  writer.write(byteArray);
+  writer.close();
+  const response = new Response(cs.readable).blob();
+  const base64 = await blobToBase64(await response);
 
-const sarifToFile = (obj: SarifReport, filename: string) =>
-  writeFileSync(filename, JSON.stringify(obj, null, 2))
+  return base64;
+};
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -17,10 +37,9 @@ const sarifToFile = (obj: SarifReport, filename: string) =>
 export async function run(): Promise<void> {
   const token = core.getInput('token')
   const octokit = getOctokit(token)
-
-  const { pull_request } = context.payload
-  let ref = context.payload.ref
+  const ref = context.payload.ref
   const repository = context.payload.repository?.full_name
+  const { pull_request } = context.payload
 
   try {
     await exec('git init')
@@ -29,7 +48,6 @@ export async function run(): Promise<void> {
     await exec('git config --global user.email no-reply@amazon.com')
     if (context.eventName === 'pull_request') {
       const prRef = `refs/pull/${context.payload.pull_request?.number}/merge`
-      ref = prRef
       await exec(`git fetch origin ${prRef}`)
       await exec(`git checkout -qf FETCH_HEAD`)
     } else {
@@ -49,41 +67,19 @@ export async function run(): Promise<void> {
       dataPath
     })
 
-    const inputFile = `/tmp/guard-report-${new Date().getTime()}.sarif`
-
-    sarifToFile(result, inputFile)
-
-    let outputBuffer = Buffer.alloc(0)
-
-    const readStream = createReadStream(inputFile)
-    const gzip = zlib.createGzip()
-
-    readStream
-      .pipe(gzip)
-      .pipe(new Base64Encode())
-      .on('data', (chunk: Uint8Array) => {
-        outputBuffer = Buffer.concat([outputBuffer, chunk])
-      })
-      .on('end', () => {
-        console.log(outputBuffer.toString('utf8'))
-      })
-      .on('error', (err: Error) => {
-        console.error('Error:', err)
-      })
+    const {
+      runs: [run]
+    } = result
 
     await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
       ...context.repo,
       commit_sha: context.payload.head_commit,
       ref,
-      sarif: outputBuffer.toString(),
+      sarif: await compress(JSON.stringify(result)),
       headers: {
         'X-GitHub-Api-Version': '2022-11-28'
       }
     })
-
-    const {
-      runs: [run]
-    } = result
 
     if (run.results.length) {
       core.setFailed('Validation failure. CFN Guard found violations.')
