@@ -12,18 +12,20 @@ const compressAndEncode = async (input: string): Promise<string> => {
   const compressedData = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = []
 
-    const compressed = byteArray.pipe(gzip)
-    compressed.on('data', (chunk: Buffer) => {
+    gzip.on('data', (chunk: Buffer) => {
       chunks.push(chunk)
     })
 
-    compressed.on('end', () => {
+    gzip.on('end', () => {
       resolve(Buffer.concat(chunks))
     })
 
-    compressed.on('error', (error: Error) => {
+    gzip.on('error', (error: Error) => {
       reject(error)
     })
+
+    gzip.write(byteArray)
+    gzip.end()
   })
 
   const base64 = await blobToBase64(compressedData)

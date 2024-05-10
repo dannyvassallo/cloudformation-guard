@@ -30958,16 +30958,17 @@ const compressAndEncode = async (input) => {
     const gzip = zlib.createGzip();
     const compressedData = await new Promise((resolve, reject) => {
         const chunks = [];
-        const compressed = byteArray.pipe(gzip);
-        compressed.on('data', (chunk) => {
+        gzip.on('data', (chunk) => {
             chunks.push(chunk);
         });
-        compressed.on('end', () => {
+        gzip.on('end', () => {
             resolve(Buffer.concat(chunks));
         });
-        compressed.on('error', (error) => {
+        gzip.on('error', (error) => {
             reject(error);
         });
+        gzip.write(byteArray);
+        gzip.end();
     });
     const base64 = await blobToBase64(compressedData);
     return base64;
