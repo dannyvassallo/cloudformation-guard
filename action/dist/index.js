@@ -30917,7 +30917,49 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 399:
+/***/ 9274:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.checkoutRepository = void 0;
+const exec_1 = __nccwpck_require__(1514);
+const github_1 = __nccwpck_require__(5438);
+var CheckoutRepositoryStrings;
+(function (CheckoutRepositoryStrings) {
+    CheckoutRepositoryStrings["Error"] = "Error checking out repository";
+})(CheckoutRepositoryStrings || (CheckoutRepositoryStrings = {}));
+/**
+ * Checkout the appropriate ref for the users changes.
+ * @returns {void}
+ */
+const checkoutRepository = async () => {
+    const ref = github_1.context.payload.ref;
+    const repository = github_1.context.payload.repository?.full_name;
+    try {
+        await (0, exec_1.exec)('git init');
+        await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
+        if (github_1.context.eventName === 'pull_request') {
+            const prRef = `refs/pull/${github_1.context.payload.pull_request?.number}/merge`;
+            await (0, exec_1.exec)(`git fetch origin ${prRef}`);
+            await (0, exec_1.exec)(`git checkout -qf FETCH_HEAD`);
+        }
+        else {
+            await (0, exec_1.exec)(`git fetch origin ${ref}`);
+            await (0, exec_1.exec)(`git checkout FETCH_HEAD`);
+        }
+    }
+    catch (error) {
+        throw new Error(`${CheckoutRepositoryStrings.Error}: ${error}`);
+    }
+};
+exports.checkoutRepository = checkoutRepository;
+
+
+/***/ }),
+
+/***/ 5677:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -30946,17 +30988,339 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getConfig = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+/**
+ * Returns the config values in JSON format
+ * @returns {Config}
+ */
+const getConfig = () => ({
+    rulesPath: core.getInput('rules'),
+    dataPath: core.getInput('data'),
+    token: core.getInput('token'),
+    checkout: core.getBooleanInput('checkout'),
+    analyze: core.getBooleanInput('analyze'),
+    createReview: core.getBooleanInput('create-review')
+});
+exports.getConfig = getConfig;
+exports["default"] = exports.getConfig;
+
+
+/***/ }),
+
+/***/ 4879:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.handlePullRequestRun = void 0;
+const github_1 = __nccwpck_require__(5438);
+const getConfig_1 = __importDefault(__nccwpck_require__(5677));
+var HandlePullRequestRunStrings;
+(function (HandlePullRequestRunStrings) {
+    HandlePullRequestRunStrings["Error"] = "Tried to handle pull request result but could not find PR context.";
+})(HandlePullRequestRunStrings || (HandlePullRequestRunStrings = {}));
+/**
+ * Handles formatting the reported execution of a pull request run for the CFN Guard action.
+ * @param {HandlePullRequestRunParams} params - The parameters for the pull request run.
+ * @param {SarifRun} params.run - The SARIF run object containing the validation results.
+ * @returns {Promise<string[][]>} - An array of arrays, where each inner array represents a violation with the following format: [file path, violation message, rule ID].
+ * @throws {Error} - Throws an error if the pull request context cannot be found.
+ */
+const handlePullRequestRun = async ({ run }) => {
+    const { token, createReview } = (0, getConfig_1.default)();
+    const octokit = (0, github_1.getOctokit)(token);
+    const { pull_request } = github_1.context.payload;
+    if (!pull_request) {
+        throw new Error(HandlePullRequestRunStrings.Error);
+    }
+    const tmpComments = run.results.map(result => ({
+        body: result.message.text,
+        path: result.locations[0].physicalLocation.artifactLocation.uri,
+        position: result.locations[0].physicalLocation.region.startLine
+    }));
+    const listFiles = await octokit.rest.pulls.listFiles({
+        ...github_1.context.repo,
+        pull_number: pull_request.number,
+        per_page: 3000
+    });
+    const filesChanged = listFiles.data.map(({ filename }) => filename);
+    const filesWithViolations = tmpComments.map(({ path }) => path);
+    const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
+    const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
+    createReview &&
+        (await octokit.rest.pulls.createReview({
+            ...github_1.context.repo,
+            pull_number: pull_request.number,
+            comments,
+            event: 'COMMENT',
+            commit_id: github_1.context.payload.head_commit
+        }));
+    return run.results
+        .map(({ locations: [location], ruleId, message: { text } }) => filesWithViolationsInPr.includes(location.physicalLocation.artifactLocation.uri)
+        ? [
+            `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+            text,
+            ruleId
+        ]
+        : [])
+        .filter(result => result.some(Boolean));
+};
+exports.handlePullRequestRun = handlePullRequestRun;
+
+
+/***/ }),
+
+/***/ 5802:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.handlePushRun = void 0;
+/**
+ * Handles the execution of a push run for the CFN Guard action.
+ * @param {HandlePushRunParams} params - The parameters for the push run.
+ * @param {SarifRun} params.run - The SARIF run object containing the validation results.
+ * @returns {Promise<string[][]>} - An array of arrays, where each inner array represents a violation with the following format: [file path, violation message, rule ID].
+ */
+const handlePushRun = async ({ run }) => run.results.map(({ locations: [location], ruleId, message: { text } }) => [
+    `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+    text,
+    ruleId
+]);
+exports.handlePushRun = handlePushRun;
+
+
+/***/ }),
+
+/***/ 5426:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.handleValidate = void 0;
+const getConfig_1 = __importDefault(__nccwpck_require__(5677));
+const core = __importStar(__nccwpck_require__(2186));
+const cfn_guard_1 = __nccwpck_require__(7848);
+/**
+ * Handles the validation of the CloudFormation templates using CFN Guard.
+ * @returns {Promise<SarifReport>} - The SARIF report containing the validation results.
+ */
+const handleValidate = async () => {
+    const { rulesPath, dataPath } = (0, getConfig_1.default)();
+    const result = await (0, cfn_guard_1.validate)({
+        rulesPath,
+        dataPath
+    });
+    core.setOutput('result', JSON.stringify(result, null, 2));
+    return result;
+};
+exports.handleValidate = handleValidate;
+
+
+/***/ }),
+
+/***/ 5546:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.handleWriteActionSummary = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+var ValidationSummaryStrings;
+(function (ValidationSummaryStrings) {
+    ValidationSummaryStrings["File"] = "File";
+    ValidationSummaryStrings["Reason"] = "Reason";
+    ValidationSummaryStrings["Rule"] = "Rule";
+    ValidationSummaryStrings["Heading"] = "Validation Failures";
+})(ValidationSummaryStrings || (ValidationSummaryStrings = {}));
+/**
+ * Writes a summary of the validation results to the GitHub Actions summary.
+ * @param {HandleWriteActionSummaryParams} params - The parameters for writing the action summary.
+ * @param {string[][]} params.results - A 2D array of strings representing the validation results. Each inner array contains the file path, violation message, and rule ID.
+ * @returns {Promise<void>} - Resolves when the action summary has been written.
+ */
+const handleWriteActionSummary = async ({ results }) => {
+    await core.summary
+        .addHeading(ValidationSummaryStrings.Heading)
+        .addTable([
+        [
+            { data: ValidationSummaryStrings.File, header: true },
+            { data: ValidationSummaryStrings.Reason, header: true },
+            { data: ValidationSummaryStrings.Rule, header: true }
+        ],
+        ...results
+    ])
+        .write();
+};
+exports.handleWriteActionSummary = handleWriteActionSummary;
+
+
+/***/ }),
+
+/***/ 399:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const exec_1 = __nccwpck_require__(1514);
 const github_1 = __nccwpck_require__(5438);
-const cfn_guard_1 = __nccwpck_require__(7848);
-const { Buffer } = __nccwpck_require__(4300);
-const zlib = __nccwpck_require__(9796);
+const checkoutRepository_1 = __nccwpck_require__(9274);
+const uploadCodeScan_1 = __nccwpck_require__(1806);
+const handleValidate_1 = __nccwpck_require__(5426);
+const handlePullRequestRun_1 = __nccwpck_require__(4879);
+const handlePushRun_1 = __nccwpck_require__(5802);
+const handleWriteActionSummary_1 = __nccwpck_require__(5546);
+const getConfig_1 = __importDefault(__nccwpck_require__(5677));
+var RunStrings;
+(function (RunStrings) {
+    RunStrings["ValidationFailed"] = "Validation failure. CFN Guard found violations.";
+    RunStrings["Error"] = "Action failed with error";
+})(RunStrings || (RunStrings = {}));
+/**
+ * The main function for the action.
+ * @returns {Promise<void>} Resolves when the action is complete.
+ */
+async function run() {
+    const { analyze, checkout } = (0, getConfig_1.default)();
+    const { pull_request } = github_1.context.payload;
+    checkout && (await (0, checkoutRepository_1.checkoutRepository)());
+    try {
+        const result = await (0, handleValidate_1.handleValidate)();
+        const { runs: [run] } = result;
+        // If there are any results, that's a failure.
+        const hasViolations = run.results.length;
+        if (hasViolations) {
+            core.setFailed(RunStrings.ValidationFailed);
+            // Only upload SARIF report if analyze is set
+            analyze && (await (0, uploadCodeScan_1.uploadCodeScan)({ result }));
+            if (!analyze) {
+                let mappedResults;
+                if (pull_request) {
+                    mappedResults = await (0, handlePullRequestRun_1.handlePullRequestRun)({ run });
+                }
+                else {
+                    mappedResults = await (0, handlePushRun_1.handlePushRun)({ run });
+                }
+                await (0, handleWriteActionSummary_1.handleWriteActionSummary)({ results: mappedResults });
+            }
+        }
+    }
+    catch (error) {
+        core.setFailed(`${RunStrings.Error}: ${error}`);
+    }
+}
+exports.run = run;
+
+
+/***/ }),
+
+/***/ 1806:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.uploadCodeScan = void 0;
+const buffer_1 = __nccwpck_require__(4300);
+const zlib_1 = __importDefault(__nccwpck_require__(9796));
+const github_1 = __nccwpck_require__(5438);
+const getConfig_1 = __importDefault(__nccwpck_require__(5677));
+/**
+ * Compresses and encodes the input string using gzip and base64.
+ * @param {string} input - The input string to be compressed and encoded.
+ * @returns {Promise<string>} - The compressed and base64-encoded string.
+ */
 const compressAndEncode = async (input) => {
-    console.warn(input);
-    const byteArray = Buffer.from(input, 'utf8');
-    const gzip = zlib.createGzip();
+    const byteArray = buffer_1.Buffer.from(input, 'utf8');
+    const gzip = zlib_1.default.createGzip();
     const compressedData = await new Promise((resolve, reject) => {
         const chunks = [];
         gzip.on('data', (chunk) => {
@@ -30964,7 +31328,7 @@ const compressAndEncode = async (input) => {
             chunks.push(chunk);
         });
         gzip.on('end', () => {
-            resolve(Buffer.concat(chunks));
+            resolve(buffer_1.Buffer.concat(chunks));
         });
         gzip.on('error', (error) => {
             reject(error);
@@ -30975,6 +31339,11 @@ const compressAndEncode = async (input) => {
     const base64 = await blobToBase64(compressedData);
     return base64;
 };
+/**
+ * Converts a Buffer to a base64-encoded string.
+ * @param {Buffer} blob - The Buffer to be converted to base64.
+ * @returns {Promise<string>} - The base64-encoded string.
+ */
 const blobToBase64 = async (blob) => {
     const reader = new ((__nccwpck_require__(2781).Readable))();
     reader._read = () => { }; // _read is required but you can noop it
@@ -30991,112 +31360,28 @@ const blobToBase64 = async (blob) => {
     });
 };
 /**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
+ * Uploads the SARIF report to the GitHub Code Scanning API.
+ * @param {UploadCodeScanParams} params - The parameters for the code scan upload.
+ * @returns {Promise<void>} - Resolves when the code scan has been uploaded successfully.
  */
-async function run() {
-    const token = core.getInput('token');
-    const octokit = (0, github_1.getOctokit)(token);
+const uploadCodeScan = async ({ result }) => {
+    const { token } = (0, getConfig_1.default)();
     const ref = github_1.context.payload.ref;
-    const repository = github_1.context.payload.repository?.full_name;
-    const { pull_request } = github_1.context.payload;
-    try {
-        await (0, exec_1.exec)('git init');
-        await (0, exec_1.exec)(`git remote add origin https://github.com/${repository}.git`);
-        await (0, exec_1.exec)('git config --global user.name cfn-guard');
-        await (0, exec_1.exec)('git config --global user.email no-reply@amazon.com');
-        if (github_1.context.eventName === 'pull_request') {
-            const prRef = `refs/pull/${github_1.context.payload.pull_request?.number}/merge`;
-            await (0, exec_1.exec)(`git fetch origin ${prRef}`);
-            await (0, exec_1.exec)(`git checkout -qf FETCH_HEAD`);
+    const octokit = (0, github_1.getOctokit)(token);
+    const params = {
+        ...github_1.context.repo,
+        commit_sha: github_1.context.payload.head_commit.id,
+        ref,
+        // SARIF reports must be gzipped and base64 encoded for the code scanning API
+        // https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28#upload-an-analysis-as-sarif-data
+        sarif: await compressAndEncode(JSON.stringify(result)),
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
         }
-        else {
-            await (0, exec_1.exec)(`git fetch origin ${ref}`);
-            await (0, exec_1.exec)(`git checkout FETCH_HEAD`);
-        }
-    }
-    catch (error) {
-        core.setFailed(`Failed to checkout changes: ${error}`);
-    }
-    try {
-        const rulesPath = core.getInput('rules');
-        const dataPath = core.getInput('data');
-        const result = await (0, cfn_guard_1.validate)({
-            rulesPath,
-            dataPath
-        });
-        const { runs: [run] } = result;
-        const codeqlParams = {
-            ...github_1.context.repo,
-            commit_sha: github_1.context.payload.head_commit.id,
-            ref,
-            sarif: await compressAndEncode(JSON.stringify(result)),
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        };
-        const codeQlResult = await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', codeqlParams);
-        if (run.results.length) {
-            core.setFailed('Validation failure. CFN Guard found violations.');
-            let mappedResults;
-            if (pull_request) {
-                const tmpComments = run.results.map(result => ({
-                    body: result.message.text,
-                    path: result.locations[0].physicalLocation.artifactLocation.uri,
-                    position: result.locations[0].physicalLocation.region.startLine
-                }));
-                const listFiles = await octokit.rest.pulls.listFiles({
-                    ...github_1.context.repo,
-                    pull_number: pull_request.number,
-                    per_page: 3000
-                });
-                const filesChanged = listFiles.data.map(({ filename }) => filename);
-                const filesWithViolations = tmpComments.map(({ path }) => path);
-                const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
-                const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
-                await octokit.rest.pulls.createReview({
-                    ...github_1.context.repo,
-                    pull_number: pull_request.number,
-                    comments,
-                    event: 'COMMENT',
-                    commit_id: github_1.context.payload.head_commit
-                });
-                mappedResults = run.results
-                    .map(({ locations: [location], ruleId, message: { text } }) => filesWithViolationsInPr.includes(location.physicalLocation.artifactLocation.uri)
-                    ? [
-                        `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
-                        text,
-                        ruleId
-                    ]
-                    : [])
-                    .filter(result => result.some(Boolean));
-            }
-            else {
-                mappedResults = run.results.map(({ locations: [location], ruleId, message: { text } }) => [
-                    `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
-                    text,
-                    ruleId
-                ]);
-            }
-            await core.summary
-                .addHeading('Validation Failures')
-                .addTable([
-                [
-                    { data: 'File', header: true },
-                    { data: 'Reason', header: true },
-                    { data: 'Rule', header: true }
-                ],
-                ...mappedResults
-            ])
-                .addLink('View code scanning result on github', codeQlResult?.data?.url ?? '#')
-                .write();
-        }
-    }
-    catch (error) {
-        core.setFailed(`Action failed with error: ${error}`);
-    }
-}
-exports.run = run;
+    };
+    await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', params);
+};
+exports.uploadCodeScan = uploadCodeScan;
 
 
 /***/ }),
