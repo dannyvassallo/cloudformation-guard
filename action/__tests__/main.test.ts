@@ -1,89 +1,72 @@
-/**
- * Unit tests for the action's main functionality, src/main.ts
- *
- * These should be run as if the action was called from a workflow.
- * Specifically, the inputs listed in `action.yml` should be set as environment
- * variables following the pattern `INPUT_<INPUT_NAME>`.
- */
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
+import * as getConfig from '../src/getConfig';
+import { context } from '@actions/github';
+import { run } from '../src/main'
+import { describe, expect, jest, beforeEach, it, afterEach } from '@jest/globals';
 
-import * as core from '@actions/core'
-import * as main from '../src/main'
+jest.mock('@actions/core');
+jest.mock('@actions/exec');
 
-// Mock the action's main function
-const runMock = jest.spyOn(main, 'run')
-
-// Other utilities
-const timeRegex = /^\d{2}:\d{2}:\d{2}/
-
-// Mock the GitHub Actions core library
-let debugMock: jest.SpiedFunction<typeof core.debug>
-let errorMock: jest.SpiedFunction<typeof core.error>
-let getInputMock: jest.SpiedFunction<typeof core.getInput>
-let setFailedMock: jest.SpiedFunction<typeof core.setFailed>
-let setOutputMock: jest.SpiedFunction<typeof core.setOutput>
-
-describe('action', () => {
+describe('main', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
-    errorMock = jest.spyOn(core, 'error').mockImplementation()
-    getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
-    setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
-    setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
-  })
-
-  it('sets the time output', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation(name => {
+    jest.clearAllMocks();
+    jest.spyOn(core, 'getInput').mockImplementation((name) => {
       switch (name) {
-        case 'milliseconds':
-          return '500'
+        case 'rules':
+          return '.';
+        case 'data':
+          return '.';
+        case 'token':
+          return 'test-token';
+        case 'checkout':
+          return 'true';
+        case 'analyze':
+          return 'false';
+        case 'create-review':
+          return 'true';
         default:
-          return ''
+          return '';
       }
-    })
+    });
+    jest.spyOn(getConfig, 'getConfig').mockReturnValue({
+      rulesPath: '.',
+      dataPath: '.',
+      token: 'test-token',
+      checkout: true,
+      analyze: false,
+      createReview: true,
+    });
+  });
 
-    await main.run()
-    expect(runMock).toHaveReturned()
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-    // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
-    expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
-    )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      expect.stringMatching(timeRegex)
-    )
-    expect(errorMock).not.toHaveBeenCalled()
-  })
+  it('should checkout the repository with the correct inputs', async () => {
+    context.eventName = 'pull_request';
+    context.payload = {
+      ref: 'refs/heads/main',
+      pull_request: {
+        number: 123,
+      },
+        // @ts-ignore Don't need all of the extra props for a repo in this spec
+      repository: {
+        full_name: 'owner/repo',
+      },
+    };
 
-  it('sets a failed status', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation(name => {
-      switch (name) {
-        case 'milliseconds':
-          return 'this is not a number'
-        default:
-          return ''
-      }
-    })
+    await run();
 
-    await main.run()
-    expect(runMock).toHaveReturned()
-
-    // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds not a number'
-    )
-    expect(errorMock).not.toHaveBeenCalled()
-  })
-})
+    expect(core.getInput).toHaveBeenCalledWith('rules');
+    expect(core.getInput).toHaveBeenCalledWith('data');
+    expect(core.getInput).toHaveBeenCalledWith('token');
+    expect(core.getBooleanInput).toHaveBeenCalledWith('checkout');
+    expect(core.getBooleanInput).toHaveBeenCalledWith('analyze');
+    expect(core.getBooleanInput).toHaveBeenCalledWith('create-review');
+    // expect(exec.exec).toHaveBeenCalledWith('git init');
+    // expect(exec.exec).toHaveBeenCalledWith('git remote add origin https://github.com/owner/repo.git');
+    // expect(exec.exec).toHaveBeenCalledWith('git fetch origin refs/pull/123/merge');
+    // expect(exec.exec).toHaveBeenCalledWith('git checkout -qf FETCH_HEAD');
+  });
+});

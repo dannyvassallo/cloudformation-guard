@@ -10,7 +10,7 @@ import * as core from '@actions/core'
  * @param {string} input - The input string to be compressed and encoded.
  * @returns {Promise<string>} - The compressed and base64-encoded string.
  */
-const compressAndEncode = async (input: string): Promise<string> => {
+export const compressAndEncode = async (input: string): Promise<string> => {
   const byteArray = Buffer.from(input, 'utf8')
   const gzip = zlib.createGzip()
 
@@ -18,7 +18,6 @@ const compressAndEncode = async (input: string): Promise<string> => {
     const chunks: Buffer[] = []
 
     gzip.on('data', (chunk: Buffer) => {
-      console.warn(chunk)
       chunks.push(chunk)
     })
 
