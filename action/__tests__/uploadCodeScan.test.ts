@@ -109,8 +109,8 @@ describe('uploadCodeScan', () => {
     expect(github.getOctokit('test-token').request).toHaveBeenCalledWith(
       'POST /repos/{owner}/{repo}/code-scanning/sarifs',
       {
-        owner: undefined,
-        repo: undefined,
+        owner: 'owner',
+        repo: 'repo',
         commit_sha: 'test-commit-id',
         ref: 'refs/heads/main',
         sarif: 'compressed-and-encoded-sarif',

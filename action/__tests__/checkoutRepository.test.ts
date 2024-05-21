@@ -3,14 +3,7 @@ import { context } from '@actions/github';
 import { checkoutRepository } from '../src/checkoutRepository';
 import { describe, expect, jest, it, afterEach } from '@jest/globals';
 
-jest.mock('@actions/exec');
-jest.mock('@actions/github');
-
 describe('checkoutRepository', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should checkout the pull request ref', async () => {
     context.eventName = 'pull_request';
     context.payload = {

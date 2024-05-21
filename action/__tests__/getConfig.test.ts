@@ -2,13 +2,7 @@ import * as core from '@actions/core';
 import getConfig, { Config } from '../src/getConfig';
 import { describe, expect, jest, beforeEach, it, afterEach } from '@jest/globals';
 
-jest.mock('@actions/core');
-
 describe('getConfig', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should return the correct config values', () => {
     jest.spyOn(core, 'getInput').mockImplementation((name) => {
       switch (name) {

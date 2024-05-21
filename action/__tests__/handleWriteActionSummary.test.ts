@@ -15,10 +15,6 @@ jest.mock('@actions/core', () => {
 });
 
 describe('handleWriteActionSummary', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should write the validation results to the GitHub Actions summary', async () => {
     const mockResults = [
       ['file1.ts', 'Violation message 1', 'rule-id-1'],

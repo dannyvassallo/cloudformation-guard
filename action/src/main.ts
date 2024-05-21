@@ -19,37 +19,23 @@ enum RunStrings {
  */
 export async function run(): Promise<void> {
   const { analyze, checkout } = getConfig()
-
   const { pull_request } = context.payload
 
   checkout && (await checkoutRepository())
 
   try {
     const result = await handleValidate()
-
     const {
       runs: [run]
     } = result
 
-    // If there are any results, that's a failure.
-    const hasViolations = run.results.length
-
-    if (hasViolations) {
+    if (run.results.length) {
       core.setFailed(RunStrings.ValidationFailed)
 
-      // Only upload SARIF report if analyze is set
-      analyze && (await uploadCodeScan({ result }))
-
-      if (!analyze) {
-        let mappedResults: string[][]
-
-        if (pull_request) {
-          mappedResults = await handlePullRequestRun({ run })
-        } else {
-          mappedResults = await handlePushRun({ run })
-        }
-
-        await handleWriteActionSummary({ results: mappedResults })
+      if (analyze) {
+        await uploadCodeScan({ result })
+      } else {
+        await handleWriteActionSummary({ results: pull_request ? await handlePullRequestRun({ run }) :  await handlePushRun({ run }) })
       }
     }
   } catch (error) {

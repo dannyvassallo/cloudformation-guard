@@ -37,9 +37,9 @@
   },
   "license": "MIT",
   "jest": {
+    "automock": false,
     "preset": "ts-jest",
     "verbose": true,
-    "clearMocks": true,
     "testEnvironment": "node",
     "moduleFileExtensions": [
       "js",
@@ -47,6 +47,9 @@
     ],
     "testMatch": [
       "**/*.test.ts"
+    ],
+    "setupFiles": [
+      "./jestSetup.ts"
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
