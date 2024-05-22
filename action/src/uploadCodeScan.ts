@@ -3,7 +3,10 @@ import zlib from 'zlib'
 import { context, getOctokit } from '@actions/github'
 import getConfig from './getConfig'
 import { SarifReport } from 'cfn-guard'
-import * as core from '@actions/core'
+
+enum Endpoints {
+  CodeScan = 'POST /repos/{owner}/{repo}/code-scanning/sarifs'
+}
 
 /**
  * Compresses and encodes the input string using gzip and base64.
@@ -73,6 +76,7 @@ export const uploadCodeScan = async ({ result }: UploadCodeScanParams) => {
   const { token } = getConfig()
   const ref = context.payload.ref
   const octokit = getOctokit(token)
+  const headers = { 'X-GitHub-Api-Version': '2022-11-28' }
 
   const params = {
     ...context.repo,
@@ -81,13 +85,11 @@ export const uploadCodeScan = async ({ result }: UploadCodeScanParams) => {
     // SARIF reports must be gzipped and base64 encoded for the code scanning API
     // https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28#upload-an-analysis-as-sarif-data
     sarif: await compressAndEncode(JSON.stringify(result)),
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28'
-    }
+    headers
   }
 
   await octokit.request(
-    'POST /repos/{owner}/{repo}/code-scanning/sarifs',
+    Endpoints.CodeScan,
     params
   )
 }

@@ -27,7 +27,7 @@ type HandleCreateReviewParams = {
  * @async
  * @function handleCreateReview
  * @param {HandleCreateReviewParams} params - The parameters for creating the review.
- * @param {Comment[]} params.tmpComments - The temporary comments to be filtered and added to the review.
+ * @param {Comments} params.tmpComments - The temporary comments to be filtered and added to the review.
  * @param {string[]} params.filesWithViolationsInPr - The list of files with violations in the pull request.
  * @returns {Promise<void>}
  */
