@@ -5,18 +5,6 @@ import { describe, expect, jest, it, afterEach } from '@jest/globals';
 
 describe('checkoutRepository', () => {
   it('should checkout the pull request ref', async () => {
-    context.eventName = 'pull_request';
-    context.payload = {
-      ref: 'refs/heads/main',
-      pull_request: {
-        number: 123,
-      },
-      // @ts-ignore Don't need all of the extra props for a repo in this spec
-      repository: {
-        full_name: 'owner/repo',
-      },
-    };
-
     await checkoutRepository();
 
     expect(exec.exec).toHaveBeenCalledWith('git init');
@@ -27,13 +15,6 @@ describe('checkoutRepository', () => {
 
   it('should checkout the branch ref', async () => {
     context.eventName = 'push';
-    context.payload = {
-      ref: 'refs/heads/main',
-      // @ts-ignore Don't need all of the extra props for a repo in this spec
-      repository: {
-        full_name: 'owner/repo',
-      },
-    };
 
     await checkoutRepository();
 
@@ -44,18 +25,6 @@ describe('checkoutRepository', () => {
   });
 
   it('should throw an error if the checkout fails', async () => {
-    context.eventName = 'pull_request';
-    context.payload = {
-      ref: 'refs/heads/main',
-      pull_request: {
-        number: 123,
-      },
-      // @ts-ignore Don't need all of the extra props for a repo in this spec
-      repository: {
-        full_name: 'owner/repo',
-      },
-    };
-    // @ts-ignore Don't need all of the extra props for a repo in this spec
     jest.spyOn(exec, 'exec').mockImplementation(() => {
       throw 'Failed to checkout repository';
     });

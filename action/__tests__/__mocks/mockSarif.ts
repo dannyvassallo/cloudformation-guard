@@ -1,4 +1,4 @@
-import { SarifRun } from 'cfn-guard';
+import { SarifReport, SarifRun } from 'cfn-guard';
 
 export const mockSarifRun: SarifRun = {
   tool: {
@@ -65,4 +65,10 @@ export const mockSarifRun: SarifRun = {
   ],
 };
 
-export default mockSarifRun;
+export const mockSarifResult: SarifReport = {
+  $schema: 'x',
+  version: '2.1.0',
+  runs: [
+    mockSarifRun
+  ],
+};

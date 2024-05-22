@@ -1,4 +1,22 @@
-import path from 'path'
+import { context } from '@actions/github'
+
+context.eventName = 'pull_request';
+context.payload = {
+  ref: 'refs/heads/main',
+  pull_request: {
+    number: 123,
+  },
+  head_commit: {
+    id:  "test-commit-id",
+  },
+  repository: {
+    full_name: 'owner/repo',
+    name: 'repo',
+    owner: {
+      login: 'owner',
+    },
+  },
+};
 
 jest.mock('@actions/exec', () => {
   const originalModule = jest.requireActual('@actions/exec');
@@ -54,9 +72,9 @@ jest.mock('@actions/core', () => {
     getInput: jest.fn().mockImplementation((name) => {
       switch (name) {
         case 'rules':
-          return path.resolve(__dirname, '../guard/resources/validate/rules-dir');
+          return 'test-rules-path'
         case 'data':
-          return path.resolve(__dirname, '../guard/resources/validate/data-dir');
+          return 'test-data-path'
         case 'token':
           return 'test-token';
         default:
@@ -66,13 +84,13 @@ jest.mock('@actions/core', () => {
     getBooleanInput: jest.fn().mockImplementation((name) => {
       switch (name) {
         case 'checkout':
-          return 'true';
+          return true;
         case 'analyze':
-          return 'false';
+          return true;
         case 'create-review':
-          return 'true';
+          return true;
         default:
-          return 'false';
+          return false;
       }
     }),
     setOutput: jest.fn(),

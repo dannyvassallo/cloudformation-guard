@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import { handleWriteActionSummary } from '../src/handleWriteActionSummary';
-import { jest, describe, afterEach, it, expect } from '@jest/globals';
+import { jest, describe, it, expect } from '@jest/globals';
 
 jest.mock('@actions/core', () => {
   return {

@@ -1,6 +1,6 @@
 import { handlePullRequestRun } from '../src/handlePullRequestRun';
-import { describe, expect, it, afterEach, jest } from '@jest/globals'
-import { mockSarifRun } from './__mocks/mockSarifRun';
+import { describe, expect, it } from '@jest/globals'
+import { mockSarifRun } from './__mocks/mockSarif';
 import { context } from '@actions/github';
 
 describe('handlePullRequestRun success', () => {

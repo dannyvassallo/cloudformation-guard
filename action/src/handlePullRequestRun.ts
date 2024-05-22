@@ -6,8 +6,51 @@ enum HandlePullRequestRunStrings {
   Error = 'Tried to handle pull request result but could not find PR context.'
 }
 
-type HandlePullRequestRunParams = {
+export type HandlePullRequestRunParams = {
   run: SarifRun
+}
+
+type Comments = {
+  body: string
+  path: string
+  position: number
+}[]
+
+type HandleCreateReviewParams = {
+  tmpComments: Comments
+  filesWithViolationsInPr: string[]
+}
+
+/**
+ * Handle the creation of a review on a pull request.
+ *
+ * @async
+ * @function handleCreateReview
+ * @param {HandleCreateReviewParams} params - The parameters for creating the review.
+ * @param {Comment[]} params.tmpComments - The temporary comments to be filtered and added to the review.
+ * @param {string[]} params.filesWithViolationsInPr - The list of files with violations in the pull request.
+ * @returns {Promise<void>}
+ */
+export const handleCreateReview = async ({
+  tmpComments,
+  filesWithViolationsInPr
+}: HandleCreateReviewParams) => {
+  const { token } = getConfig()
+  const { pull_request } = context.payload
+  if (!pull_request) return
+  const octokit = getOctokit(token)
+
+  const comments = tmpComments.filter(comment =>
+    filesWithViolationsInPr.includes(comment.path)
+  )
+
+  await octokit.rest.pulls.createReview({
+    ...context.repo,
+    pull_number: pull_request.number,
+    comments,
+    event: 'COMMENT',
+    commit_id: context.payload.head_commit
+  })
 }
 
 /**
@@ -28,12 +71,6 @@ export const handlePullRequestRun = async ({
     throw new Error(HandlePullRequestRunStrings.Error)
   }
 
-  const tmpComments = run.results.map(result => ({
-    body: result.message.text,
-    path: result.locations[0].physicalLocation.artifactLocation.uri,
-    position: result.locations[0].physicalLocation.region.startLine
-  }))
-
   const listFiles = await octokit.rest.pulls.listFiles({
     ...context.repo,
     pull_number: pull_request.number,
@@ -42,24 +79,21 @@ export const handlePullRequestRun = async ({
 
   const filesChanged = listFiles.data.map(({ filename }) => filename)
 
+  const tmpComments = run.results.map(result => ({
+    body: result.message.text,
+    path: result.locations[0].physicalLocation.artifactLocation.uri,
+    position: result.locations[0].physicalLocation.region.startLine
+  }))
+
   const filesWithViolations = tmpComments.map(({ path }) => path)
 
   const filesWithViolationsInPr = filesChanged.filter(value =>
     filesWithViolations.includes(value)
   )
-
-  const comments = tmpComments.filter(comment =>
-    filesWithViolationsInPr.includes(comment.path)
-  )
-
-  createReview &&
-    (await octokit.rest.pulls.createReview({
-      ...context.repo,
-      pull_number: pull_request.number,
-      comments,
-      event: 'COMMENT',
-      commit_id: context.payload.head_commit
-    }))
+  createReview && await handleCreateReview({
+    tmpComments,
+    filesWithViolationsInPr
+  })
 
   return run.results
     .map(({ locations: [location], ruleId, message: { text } }) =>

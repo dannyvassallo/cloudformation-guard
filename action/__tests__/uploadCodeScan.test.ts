@@ -6,6 +6,7 @@ import { SarifReport } from 'cfn-guard';
 import * as uploadCodeScan from '../src/uploadCodeScan';
 import { jest, describe, it, expect } from '@jest/globals';
 import { context } from '@actions/github';
+import { mockSarifResult } from './__mocks/mockSarif';
 
 jest.mock('@actions/github');
 jest.mock('../src/getConfig');
@@ -16,20 +17,7 @@ describe('compressAndEncode', () => {
   it('should compress and encode the input string', async () => {
     const input = 'test input';
     const expectedBase64 = 'dGVzdCBpbnB1dA==';
-    context.eventName = 'pull_request';
-    context.payload = {
-      ref: 'refs/heads/main',
-      pull_request: {
-        number: 123,
-      },
-      head_commit: {
-        id:  "test-commit-id",
-      },
-      // @ts-ignore Don't need all of the extra props for a repo in this spec
-      repository: {
-        full_name: 'owner/repo',
-      },
-    };
+
     jest.spyOn(zlib, 'createGzip').mockImplementation(() => ({
       // @ts-ignore whatever for now
       on: jest.fn((event, callback) => {
@@ -54,42 +42,6 @@ describe('compressAndEncode', () => {
 
 describe('uploadCodeScan', () => {
   it('should upload the SARIF report to the GitHub Code Scanning API', async () => {
-    const mockResult: SarifReport = {
-      version: '2.1.0',
-      runs: [
-        {
-          tool: {
-            // @ts-ignore don't need a full report
-            driver: {
-              name: 'CFN Guard',
-            },
-          },
-          results: [
-            {
-              ruleId: 'rule-id-1',
-              message: {
-                text: 'Violation message',
-              },
-              level: 'error',
-              locations: [
-                {
-                  physicalLocation: {
-                    artifactLocation: {
-                      uri: '/path/to/file.ts',
-                    },
-                    region: {
-                      startLine: 10,
-                      startColumn: 5,
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
     const mockConfig = {
       token: 'test-token',
     };
@@ -101,11 +53,11 @@ describe('uploadCodeScan', () => {
     });
     jest.spyOn(uploadCodeScan, 'compressAndEncode').mockResolvedValue('compressed-and-encoded-sarif');
 
-    await uploadCodeScan.uploadCodeScan({ result: mockResult });
+    await uploadCodeScan.uploadCodeScan({ result: mockSarifResult });
 
     expect(getConfig.default).toHaveBeenCalled();
     expect(github.getOctokit).toHaveBeenCalledWith('test-token');
-    expect(uploadCodeScan.compressAndEncode).toHaveBeenCalledWith(JSON.stringify(mockResult));
+    expect(uploadCodeScan.compressAndEncode).toHaveBeenCalledWith(JSON.stringify(mockSarifResult));
     expect(github.getOctokit('test-token').request).toHaveBeenCalledWith(
       'POST /repos/{owner}/{repo}/code-scanning/sarifs',
       {

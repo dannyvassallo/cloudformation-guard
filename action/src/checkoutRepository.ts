@@ -27,3 +27,5 @@ export const checkoutRepository = async () => {
     throw new Error(`${CheckoutRepositoryStrings.Error}: ${error}`)
   }
 }
+
+export default checkoutRepository
