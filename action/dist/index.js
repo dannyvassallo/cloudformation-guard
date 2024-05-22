@@ -30955,6 +30955,7 @@ const checkoutRepository = async () => {
     }
 };
 exports.checkoutRepository = checkoutRepository;
+exports["default"] = exports.checkoutRepository;
 
 
 /***/ }),
@@ -31017,13 +31018,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.handlePullRequestRun = void 0;
+exports.handlePullRequestRun = exports.handleCreateReview = void 0;
 const github_1 = __nccwpck_require__(5438);
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 var HandlePullRequestRunStrings;
 (function (HandlePullRequestRunStrings) {
     HandlePullRequestRunStrings["Error"] = "Tried to handle pull request result but could not find PR context.";
 })(HandlePullRequestRunStrings || (HandlePullRequestRunStrings = {}));
+/**
+ * Handle the creation of a review on a pull request.
+ *
+ * @async
+ * @function handleCreateReview
+ * @param {HandleCreateReviewParams} params - The parameters for creating the review.
+ * @param {Comment[]} params.tmpComments - The temporary comments to be filtered and added to the review.
+ * @param {string[]} params.filesWithViolationsInPr - The list of files with violations in the pull request.
+ * @returns {Promise<void>}
+ */
+const handleCreateReview = async ({ tmpComments, filesWithViolationsInPr }) => {
+    const { token } = (0, getConfig_1.default)();
+    const { pull_request } = github_1.context.payload;
+    if (!pull_request)
+        return;
+    const octokit = (0, github_1.getOctokit)(token);
+    const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
+    await octokit.rest.pulls.createReview({
+        ...github_1.context.repo,
+        pull_number: pull_request.number,
+        comments,
+        event: 'COMMENT',
+        commit_id: github_1.context.payload.head_commit
+    });
+};
+exports.handleCreateReview = handleCreateReview;
 /**
  * Handles formatting the reported execution of a pull request run for the CFN Guard action.
  * @param {HandlePullRequestRunParams} params - The parameters for the pull request run.
@@ -31038,28 +31065,23 @@ const handlePullRequestRun = async ({ run }) => {
     if (!pull_request) {
         throw new Error(HandlePullRequestRunStrings.Error);
     }
-    const tmpComments = run.results.map(result => ({
-        body: result.message.text,
-        path: result.locations[0].physicalLocation.artifactLocation.uri,
-        position: result.locations[0].physicalLocation.region.startLine
-    }));
     const listFiles = await octokit.rest.pulls.listFiles({
         ...github_1.context.repo,
         pull_number: pull_request.number,
         per_page: 3000
     });
     const filesChanged = listFiles.data.map(({ filename }) => filename);
+    const tmpComments = run.results.map(result => ({
+        body: result.message.text,
+        path: result.locations[0].physicalLocation.artifactLocation.uri,
+        position: result.locations[0].physicalLocation.region.startLine
+    }));
     const filesWithViolations = tmpComments.map(({ path }) => path);
     const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
-    const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
-    createReview &&
-        (await octokit.rest.pulls.createReview({
-            ...github_1.context.repo,
-            pull_number: pull_request.number,
-            comments,
-            event: 'COMMENT',
-            commit_id: github_1.context.payload.head_commit
-        }));
+    createReview && await (0, exports.handleCreateReview)({
+        tmpComments,
+        filesWithViolationsInPr
+    });
     return run.results
         .map(({ locations: [location], ruleId, message: { text } }) => filesWithViolationsInPr.includes(location.physicalLocation.artifactLocation.uri)
         ? [
@@ -31267,26 +31289,18 @@ var RunStrings;
  */
 async function run() {
     const { analyze, checkout } = (0, getConfig_1.default)();
-    const { pull_request } = github_1.context.payload;
+    const { eventName } = github_1.context;
     checkout && (await (0, checkoutRepository_1.checkoutRepository)());
     try {
         const result = await (0, handleValidate_1.handleValidate)();
         const { runs: [run] } = result;
-        // If there are any results, that's a failure.
-        const hasViolations = run.results.length;
-        if (hasViolations) {
+        if (run.results.length) {
             core.setFailed(RunStrings.ValidationFailed);
-            // Only upload SARIF report if analyze is set
-            analyze && (await (0, uploadCodeScan_1.uploadCodeScan)({ result }));
-            if (!analyze) {
-                let mappedResults;
-                if (pull_request) {
-                    mappedResults = await (0, handlePullRequestRun_1.handlePullRequestRun)({ run });
-                }
-                else {
-                    mappedResults = await (0, handlePushRun_1.handlePushRun)({ run });
-                }
-                await (0, handleWriteActionSummary_1.handleWriteActionSummary)({ results: mappedResults });
+            if (analyze) {
+                await (0, uploadCodeScan_1.uploadCodeScan)({ result });
+            }
+            else {
+                await (0, handleWriteActionSummary_1.handleWriteActionSummary)({ results: eventName === 'pull_request' ? await (0, handlePullRequestRun_1.handlePullRequestRun)({ run }) : await (0, handlePushRun_1.handlePushRun)({ run }) });
             }
         }
     }
@@ -31308,7 +31322,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.uploadCodeScan = void 0;
+exports.uploadCodeScan = exports.compressAndEncode = void 0;
 const buffer_1 = __nccwpck_require__(4300);
 const zlib_1 = __importDefault(__nccwpck_require__(9796));
 const github_1 = __nccwpck_require__(5438);
@@ -31324,7 +31338,6 @@ const compressAndEncode = async (input) => {
     const compressedData = await new Promise((resolve, reject) => {
         const chunks = [];
         gzip.on('data', (chunk) => {
-            console.warn(chunk);
             chunks.push(chunk);
         });
         gzip.on('end', () => {
@@ -31339,6 +31352,7 @@ const compressAndEncode = async (input) => {
     const base64 = await blobToBase64(compressedData);
     return base64;
 };
+exports.compressAndEncode = compressAndEncode;
 /**
  * Converts a Buffer to a base64-encoded string.
  * @param {Buffer} blob - The Buffer to be converted to base64.
@@ -31374,7 +31388,7 @@ const uploadCodeScan = async ({ result }) => {
         ref,
         // SARIF reports must be gzipped and base64 encoded for the code scanning API
         // https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28#upload-an-analysis-as-sarif-data
-        sarif: await compressAndEncode(JSON.stringify(result)),
+        sarif: await (0, exports.compressAndEncode)(JSON.stringify(result)),
         headers: {
             'X-GitHub-Api-Version': '2022-11-28'
         }
