@@ -88,8 +88,5 @@ export const uploadCodeScan = async ({ result }: UploadCodeScanParams) => {
     headers
   }
 
-  await octokit.request(
-    Endpoints.CodeScan,
-    params
-  )
+  await octokit.request(Endpoints.CodeScan, params)
 }

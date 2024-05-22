@@ -35,7 +35,12 @@ export async function run(): Promise<void> {
       if (analyze) {
         await uploadCodeScan({ result })
       } else {
-        await handleWriteActionSummary({ results: eventName === 'pull_request' ? await handlePullRequestRun({ run }) :  await handlePushRun({ run }) })
+        await handleWriteActionSummary({
+          results:
+            eventName === 'pull_request'
+              ? await handlePullRequestRun({ run })
+              : await handlePushRun({ run })
+        })
       }
     }
   } catch (error) {

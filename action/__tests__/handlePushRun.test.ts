@@ -1,5 +1,5 @@
-import { describe, it, expect } from '@jest/globals';
-import { handlePushRun } from '../src/handlePushRun';
+import { describe, it, expect } from '@jest/globals'
+import { handlePushRun } from '../src/handlePushRun'
 
 describe('handlePushRun', () => {
   it('should return an array of violation details', async () => {
@@ -25,13 +25,13 @@ describe('handlePushRun', () => {
           }
         }
       ]
-    };
+    }
 
     // @ts-ignore doesn't need to be a real run
-    const violations = await handlePushRun({ run: mockRun });
+    const violations = await handlePushRun({ run: mockRun })
 
     expect(violations).toEqual([
       ['❌ /path/to/file.ts:L10,C5', 'Violation message', 'rule-id-1']
-    ]);
-  });
-});
+    ])
+  })
+})

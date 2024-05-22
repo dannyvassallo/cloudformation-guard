@@ -90,10 +90,11 @@ export const handlePullRequestRun = async ({
   const filesWithViolationsInPr = filesChanged.filter(value =>
     filesWithViolations.includes(value)
   )
-  createReview && await handleCreateReview({
-    tmpComments,
-    filesWithViolationsInPr
-  })
+  createReview &&
+    (await handleCreateReview({
+      tmpComments,
+      filesWithViolationsInPr
+    }))
 
   return run.results
     .map(({ locations: [location], ruleId, message: { text } }) =>
