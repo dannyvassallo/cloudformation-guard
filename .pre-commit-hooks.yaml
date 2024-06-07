@@ -1,6 +1,6 @@
 -   id: cfn-guard
     name: CloudFormation Guard
     description: execute the cfn-guard binary passing in arguments
-    entry: cfn-guard
+    entry: cfn_guard
     language: python
     types: [python]
