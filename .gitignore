@@ -13,3 +13,6 @@ cmake-build-debug
 **/._*
 node_modules
 *.tgz
+lib
+bin
+__pycache__

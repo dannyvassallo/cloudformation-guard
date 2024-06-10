@@ -1,5 +1,5 @@
 repos:
 -   repo: https://github.com/dannyvassallo/cloudformation-guard
-    rev: pre-commit-v0.0.2
+    rev: pre-commit-v0.0.3
     hooks:
     -   id: cfn-guard
