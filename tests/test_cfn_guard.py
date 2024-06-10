@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 import platform
-import requests
 import shutil
 import tempfile
 from unittest.mock import patch, MagicMock
 import pytest
+from urllib.request import Request, urlopen
 
 from pre_commit_hooks.cfn_guard import main, get_latest_tag, install_cfn_guard, run_cfn_guard
 
@@ -19,11 +19,18 @@ def mock_env_setup(monkeypatch):
     temp_dir = tempfile.mkdtemp()
     monkeypatch.setattr(tempfile, "gettempdir", lambda: temp_dir)
 
-    # Mock requests.get() to return a mock response
+    # Mock urllib.request.urlopen to return a mock response
     mock_response = MagicMock()
     mock_response.json.return_value = {"tag_name": "v3.0.0"}
-    mock_response.raise_for_status = lambda: None
-    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_response)
+    monkeypatch.setattr("urllib.request.urlopen", lambda *args, **kwargs: mock_response)
+
+    # Decode the response data from bytes to string
+    def mock_urlopen(*args, **kwargs):
+        response = urlopen(*args, **kwargs)
+        response.read = lambda: mock_response.read().decode('utf-8')
+        return response
+
+    monkeypatch.setattr("urllib.request.urlopen", mock_urlopen)
 
     yield
 
