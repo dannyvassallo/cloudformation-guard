@@ -63,7 +63,11 @@ def run_cfn_guard(args):
 def main(argv: Sequence[str] | None = None) -> int:
   print(argv)
   parser = argparse.ArgumentParser()
-  args = parser.parse_args(argv)
+  parser.add_argument('args', nargs='*', help='Any additional arguments')
+
+  args = parser.parse_args()
+
+  print(f"Additional arguments: {args.args}")
 
   if shutil.which("cfn-guard") is None:
     install_cfn_guard()
