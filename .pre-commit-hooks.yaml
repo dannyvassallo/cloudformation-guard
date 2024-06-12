@@ -3,4 +3,3 @@
     description: execute the cfn-guard binary passing in arguments
     entry: cfn-guard
     language: python
-    types: [python]
