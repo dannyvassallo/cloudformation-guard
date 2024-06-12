@@ -7,6 +7,7 @@ import argparse
 from typing import Sequence
 from urllib.parse import urlparse, urlencode
 from urllib.request import Request, urlopen
+import subprocess
 import sys
 
 release_urls = {
@@ -66,15 +67,21 @@ def install_cfn_guard():
         print("Unsupported operating system")
 
 def run_cfn_guard(args: Sequence[str]):
-  print("Running cfn-guard with args:", args)
-  binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
-  tmp_dir = tempfile.gettempdir()
-  binary_path = os.path.join(tmp_dir, binary_name)
-  if os.path.exists(binary_path):
-    os.system(f"{binary_path} {' '.join(args)}")
-  else:
-    install_cfn_guard()
-    run_cfn_guard(args)
+    print("Running cfn-guard with args:", args)
+    binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
+    tmp_dir = tempfile.gettempdir()
+    binary_path = os.path.join(tmp_dir, binary_name)
+    if os.path.exists(binary_path):
+        cmd = [binary_path] + list(args)
+        try:
+            output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
+            print(output)
+        except subprocess.CalledProcessError as e:
+            print(f"cfn-guard exited with non-zero exit status {e.returncode}")
+            print(e.output)
+    else:
+        install_cfn_guard()
+        run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
   print("Running cfn-guard pre-commit hook")
