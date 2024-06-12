@@ -86,7 +86,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   if argv is None:
       argv = sys.argv[1:]
 
-  run_cfn_guard(argv)
+  return run_cfn_guard(argv)
 
 if __name__ == '__main__':
     raise SystemExit(main())
