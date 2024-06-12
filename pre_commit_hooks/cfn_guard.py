@@ -74,7 +74,8 @@ def run_cfn_guard(args: Sequence[str]):
     if os.path.exists(binary_path):
         cmd = [binary_path] + list(args)
         try:
-            subprocess.run(cmd, check=True, cwd=os.getcwd())
+            project_root = os.path.dirname(os.path.abspath(__file__))
+            subprocess.run(cmd, check=True, cwd=project_root)
         except subprocess.CalledProcessError as e:
             print(f"cfn-guard exited with non-zero status code: {e.returncode}")
             return e.returncode
