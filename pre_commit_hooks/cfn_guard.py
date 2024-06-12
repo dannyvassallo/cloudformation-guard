@@ -72,18 +72,14 @@ def run_cfn_guard(args: Sequence[str]):
     tmp_dir = tempfile.gettempdir()
     binary_path = os.path.join(tmp_dir, binary_name)
     if os.path.exists(binary_path):
-        cmd = [binary_path] + list(args)
-        try:
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            if result.returncode != 0:
-                error_message = f"cfn-guard exited with non-zero status code: {result.returncode}"
-                print(error_message, file=sys.stderr)
-            print(result.stdout, end='')
-            print(result.stderr, end='', file=sys.stderr)
-            return result.returncode
-        except Exception as e:
-            print(f"Error running cfn-guard: {e}", file=sys.stderr)
-            return 1
+        cmd = f"{binary_path} {' '.join(args)}"
+        exit_code = os.system(cmd)
+        if exit_code != 0:
+            error_message = f"cfn-guard exited with non-zero status code: {exit_code}"
+            print(error_message, file=sys.stderr)
+            return exit_code
+        else:
+            return 0
     else:
         install_cfn_guard()
         return run_cfn_guard(args)
