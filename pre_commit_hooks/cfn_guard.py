@@ -77,6 +77,7 @@ def run_cfn_guard(args: Sequence[str]):
     run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
+    print("Running cfn-guard pre-commit hook")
     if argv is None:
         argv = sys.argv[1:]
 
