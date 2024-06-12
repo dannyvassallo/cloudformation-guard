@@ -84,6 +84,7 @@ def run_cfn_guard(args: Sequence[str]):
 
 def main(argv: Sequence[str] | None = None) -> int:
   print("Running cfn-guard pre-commit hook")
+  print("Current working directory:", os.getcwd())
   if argv is None:
       argv = sys.argv[1:]
 

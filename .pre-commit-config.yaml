@@ -1,9 +1,9 @@
 repos:
 -   repo: https://github.com/dannyvassallo/cloudformation-guard
-    rev: pre-commit-v0.0.30
+    rev: pre-commit-v0.0.31
     hooks:
         -   id: cfn-guard
             args:
                 - validate
                 - --rules='./guard/resources/validate/rules-dir/'
-                - --data=''
+                - --data='./guard/resources/validate/data-dir/''
