@@ -75,7 +75,8 @@ def run_cfn_guard(args: Sequence[str]):
         cmd = f"{binary_path} {' '.join(args)}"
         exit_code = os.system(cmd)
         if exit_code != 0:
-            print(f"cfn-guard exited with non-zero status code: {exit_code}")
+            error_message = f"cfn-guard exited with non-zero status code: {exit_code}"
+            print(error_message, file=sys.stderr)
         return exit_code
     else:
         install_cfn_guard()
