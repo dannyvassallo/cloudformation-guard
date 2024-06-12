@@ -8,6 +8,7 @@ from typing import Sequence
 from urllib.parse import urlparse, urlencode
 from urllib.request import Request, urlopen
 import sys
+import subprocess
 
 release_urls = {
   "darwin": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-macos-latest.tar.gz",
@@ -66,15 +67,23 @@ def install_cfn_guard():
         print("Unsupported operating system")
 
 def run_cfn_guard(args: Sequence[str]):
-  print("Running cfn-guard with args:", args)
-  binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
-  tmp_dir = tempfile.gettempdir()
-  binary_path = os.path.join(tmp_dir, binary_name)
-  if os.path.exists(binary_path):
-    os.system(f"{binary_path} {' '.join(args)}")
-  else:
-    install_cfn_guard()
-    run_cfn_guard(args)
+    print("Running cfn-guard with args:", args)
+    binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
+    tmp_dir = tempfile.gettempdir()
+    binary_path = os.path.join(tmp_dir, binary_name)
+    if os.path.exists(binary_path):
+        cmd = [binary_path] + list(args)
+        try:
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            print(result.stdout)
+            print(result.stderr)
+            return result.returncode
+        except Exception as e:
+            print(f"Error running cfn-guard: {e}")
+            return 1
+    else:
+        install_cfn_guard()
+        return run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
   print("Running cfn-guard pre-commit hook")
