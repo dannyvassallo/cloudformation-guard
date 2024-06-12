@@ -74,16 +74,14 @@ def run_cfn_guard(args: Sequence[str]):
     if os.path.exists(binary_path):
         cmd = [binary_path] + list(args)
         try:
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            print(result.stdout)
-            print(result.stderr)
-            return result.returncode
-        except Exception as e:
-            print(f"Error running cfn-guard: {e}")
-            return 1
+            output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
+            print(output)
+        except subprocess.CalledProcessError as e:
+            print(f"cfn-guard exited with non-zero exit status {e.returncode}")
+            print(e.output)
     else:
         install_cfn_guard()
-        return run_cfn_guard(args)
+        run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
   print("Running cfn-guard pre-commit hook")
