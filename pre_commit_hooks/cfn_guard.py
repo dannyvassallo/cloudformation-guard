@@ -77,11 +77,11 @@ def run_cfn_guard(args: Sequence[str]):
     run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
-    print("Running cfn-guard pre-commit hook")
-    if argv is None:
-        argv = sys.argv[1:]
+  print("Running cfn-guard pre-commit hook")
+  if argv is None:
+    argv = sys.argv[1:]
 
-    run_cfn_guard(argv)
+  run_cfn_guard(argv)
 
 if __name__ == "__main__":
   sys.exit(main())
