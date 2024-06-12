@@ -10,9 +10,10 @@ from urllib.request import Request, urlopen
 import sys
 
 release_urls = {
-  "macos": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-macos-latest.tar.gz",
+  "darwin": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-macos-latest.tar.gz",
   "linux": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-ubuntu-latest.tar.gz",
-  "windows": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
+  "win32": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
+  "win64": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
 }
 
 def get_latest_tag():
@@ -24,33 +25,47 @@ def get_latest_tag():
     return json.loads(data)["tag_name"]
 
 def install_cfn_guard():
-  latest_tag = get_latest_tag()
-  current_os = platform.system().lower()
+    latest_tag = get_latest_tag()
+    current_os = platform.system().lower()
 
-  if current_os in release_urls:
-    url = release_urls[current_os].replace("TAG", latest_tag)
-    filename = os.path.basename(urlparse(url).path)
-    binary_name = "cfn-guard" + (".exe" if current_os == "windows" else "")
+    if current_os in ["linux", "darwin", "win32", "win64"]:
+        url = release_urls[current_os].replace("TAG", latest_tag)
+        filename = os.path.basename(urlparse(url).path)
+        binary_name = "cfn-guard" + (".exe" if current_os in ["win32", "win64"] else "")
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-      req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-      with urlopen(req) as response:
-        tar_path = os.path.join(temp_dir, filename)
-        with open(tar_path, "wb") as tar_file:
-          tar_file.write(response.read())
+        with tempfile.TemporaryDirectory() as temp_dir:
+            print(f"Downloading cfn-guard from {url} {temp_dir}")
+            req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urlopen(req) as response:
+                tar_path = os.path.join(temp_dir, filename)
+                with open(tar_path, "wb") as tar_file:
+                    tar_file.write(response.read())
 
-        with tarfile.open(tar_path, "r:gz") as tar:
-          tar.extractall(temp_dir)
+                with tarfile.open(tar_path, "r:gz") as tar:
+                    tar.extractall(temp_dir)
 
-    binary_path = os.path.join(temp_dir, binary_name)
-    tmp_dir = tempfile.gettempdir()
-    dest_path = os.path.join(tmp_dir, binary_name)
-    shutil.move(binary_path, dest_path)
-    print(f"cfn-guard binary installed in {dest_path}")
-  else:
-    print("Unsupported operating system")
+            binary_path = None
+            for root, _, files in os.walk(temp_dir):
+                for file in files:
+                    if file == binary_name:
+                        binary_path = os.path.join(root, file)
+                        break
 
-def run_cfn_guard(args):
+            if binary_path is None:
+                print("Unable to find the extracted binary")
+                return
+
+            tmp_dir = tempfile.gettempdir()
+            dest_path = os.path.join(tmp_dir, binary_name)
+
+            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+
+            shutil.move(binary_path, dest_path)
+            print(f"cfn-guard binary installed in {dest_path}")
+    else:
+        print("Unsupported operating system")
+
+def run_cfn_guard(args: Sequence[str]):
   print("Running cfn-guard with args:", args)
   binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
   tmp_dir = tempfile.gettempdir()
@@ -58,17 +73,14 @@ def run_cfn_guard(args):
   if os.path.exists(binary_path):
     os.system(f"{binary_path} {' '.join(args)}")
   else:
-    print("cfn-guard binary not found. Please install it first.")
+    install_cfn_guard()
+    run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
-  print(argv)
-  parser = argparse.ArgumentParser()
-  parser.add_argument('args', nargs='*', help='Any additional arguments')
+    if argv is None:
+        argv = sys.argv[1:]
 
-  args = parser.parse_args()
+    run_cfn_guard(argv)
 
-  print(f"Additional arguments: {args.args}")
-
-  if shutil.which("cfn-guard") is None:
-    install_cfn_guard()
-  run_cfn_guard(args)
+if __name__ == "__main__":
+  sys.exit(main())
