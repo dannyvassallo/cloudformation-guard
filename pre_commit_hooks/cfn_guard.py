@@ -75,6 +75,7 @@ def run_cfn_guard(args: Sequence[str]):
         cmd = [binary_path] + list(args)
         try:
             project_root = os.path.dirname(os.path.abspath(__file__))
+            print(f"Running command: {cmd}")
             subprocess.run(cmd, shell=True, cwd=project_root)
 
         except subprocess.CalledProcessError as e:
