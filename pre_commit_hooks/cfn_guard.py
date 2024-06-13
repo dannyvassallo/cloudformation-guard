@@ -22,8 +22,10 @@ release_urls_dict = {
 supported_oses = ["linux", "darwin", "win32", "win64"]
 windows_oses = ["win32", "win64"]
 current_os = platform.system().lower()
+install_dir = os.path.join(os.path.expanduser("~"), ".cfn-guard-pre-commit")
 
-# Roll our own get request method to avoid extra deps
+
+# Roll our own get request method to avoid extra dependencies
 def request(url: str):
   # Explicitly set the headers to avoid User-Agent "Python-urllib/x.y"
   # https://docs.python.org/3/howto/urllib2.html#headers
@@ -38,11 +40,11 @@ def get_latest_tag() -> str:
     import json
     return json.loads(data)["tag_name"]
 
-# Get OS specific binary name
+# Get an OS specific binary name
 def get_binary_name() -> str:
   return BIN_NAME + (".exe" if current_os in windows_oses else "")
 
-# Install latest cfn-guard to the OS tmp directory to avoid
+# Install the latest cfn-guard to the install_dir to avoid
 # global version conflicts with existing installations, rust,
 # and cargo
 def install_cfn_guard():
@@ -50,57 +52,52 @@ def install_cfn_guard():
     binary_name = get_binary_name()
 
     if current_os in supported_oses:
-      url = release_urls_dict[current_os].replace("TAG", latest_tag)
-      filename = os.path.basename(urlparse(url).path)
+        url = release_urls_dict[current_os].replace("TAG", latest_tag)
+        # Download tarball of release from Github
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            with urlopen(url) as response:
+                shutil.copyfileobj(response, temp_file)
 
-      # Create the temporary directory in which to store the guard binary
-      with tempfile.TemporaryDirectory() as temp_dir:
-        req = request(url)
-        with urlopen(req) as response:
-          tar_path = os.path.join(temp_dir, filename)
-          with open(tar_path, "wb") as tar_file:
-            tar_file.write(response.read())
+        # Extract tarball members to install_dir
+        with tarfile.open(temp_file.name, "r:gz") as tar:
+          # Extract tarball members to install_dir
+          for member in tar.getmembers():
+            if member.isdir():
+              continue  # Skip directories
+            # Extract the filename from the full path within the archive
+            filename = os.path.basename(member.name)
+            # Join the install_dir path and the filename to get the full target path
+            file_path = os.path.join(install_dir, filename)
+            # Open the archived file
+            with tar.extractfile(member) as source:
+                # Create a new file using the file_path with write binary mode
+                with open(file_path, 'wb') as target:
+                  # Copy the contents of the archived file(s) to the target file
+                  shutil.copyfileobj(source, target)
 
-          with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall(temp_dir)
-
-        binary_path = None
-        for root, _, files in os.walk(temp_dir):
-          for file in files:
-            if file == binary_name:
-              binary_path = os.path.join(root, file)
-              break
-
-        if binary_path is None:
-          return
-
-        tmp_dir = tempfile.gettempdir()
-        dest_path = os.path.join(tmp_dir, binary_name)
-
-        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-
-        shutil.move(binary_path, dest_path)
+        binary_path = os.path.join(install_dir, binary_name)
+        os.chmod(binary_path, 0o755)
+        os.remove(temp_file.name)
     else:
-        # This is unlikely to happen though worth covering
-        # in case the user attempts to use on another OS.
         raise Exception(UNSUPPORTED_OS_MSG)
 
 # Pass arguments to and run cfn-guard
 def run_cfn_guard(args: Sequence[str]) -> int:
-    tmp_dir = tempfile.gettempdir()
     binary_name = get_binary_name()
-    binary_path = os.path.join(tmp_dir, binary_name)
+    binary_path = os.path.join(install_dir, binary_name)
 
     if os.path.exists(binary_path):
-      # When executing the binary from within pre-commit (vs executing the script directly),
-      # the subprocess doesn't seem to honor cwd to the project root. Instead, we change
-      # the directory inside the subprocess via the cd command to the current working directory
-      # as a workaround. This is not ideal, but it works.
-      cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
-      project_root = os.path.dirname(os.path.abspath(__file__))
-      process = subprocess.run(' '.join(cmd), shell=True, cwd=project_root)
-
-      return process.returncode
+        # When executing the binary from within pre-commit (vs executing the script directly),
+        # the subprocess doesn't seem to honor cwd to the project root. Instead, we change
+        # the directory inside the subprocess via the cd command to the current working directory
+        # as a workaround. This is not ideal, but it works.
+        cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        try:
+            result = subprocess.run(' '.join(cmd), cwd=project_root, shell=True)
+            return result.returncode
+        except subprocess.CalledProcessError as e:
+            return e.returncode
     else:
         # Install cfn-guard if it doesn't exist and then run it.
         install_cfn_guard()
