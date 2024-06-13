@@ -67,27 +67,24 @@ def install_cfn_guard():
         print("Unsupported operating system")
 
 def run_cfn_guard(args: Sequence[str]):
-    print("Running cfn-guard with args:", args)
     binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
     tmp_dir = tempfile.gettempdir()
     binary_path = os.path.join(tmp_dir, binary_name)
-    if os.path.exists(binary_path):
-        cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
-        try:
-            project_root = os.path.dirname(os.path.abspath(__file__))
-            print(f"Running command: {cmd}")
-            return subprocess.run(' '.join(cmd), shell=True, cwd=project_root)
 
-        except subprocess.CalledProcessError as e:
-            print(f"cfn-guard exited with non-zero status code: {e.returncode}")
-            return e.returncode
+    if os.path.exists(binary_path):
+      # When executing the binary from within pre-commit (vs executing the script directly),
+      # the subprocess doesn't seem to honor cwd to the project root. Instead, we change
+      # the directory inside the subprocess via the cd command to the current working directory
+      # as a workaround. This is not ideal, but it works.
+      cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
+      project_root = os.path.dirname(os.path.abspath(__file__))
+      return subprocess.run(' '.join(cmd), shell=True, cwd=project_root)
     else:
         install_cfn_guard()
         return run_cfn_guard(args)
 
 def main(argv: Sequence[str] | None = None) -> int:
-  print("Running cfn-guard pre-commit hook")
-  print("Current working directory:", os.getcwd())
+  # This only serves to chop the first arg (the filename) when running the script directly
   if argv is None:
       argv = sys.argv[1:]
 
