@@ -10,34 +10,50 @@ from urllib.request import Request, urlopen
 import sys
 import subprocess
 
-release_urls = {
+LATEST_RELEASE_URL = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest
+BIN_NAME = "cfn-guard"
+UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
+
+release_urls_dict = {
   "darwin": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-macos-latest.tar.gz",
   "linux": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-ubuntu-latest.tar.gz",
-  # Map returns same release for win32 & win64
   "win32": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
   "win64": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
 }
+supported_oses = ["linux", "darwin", "win32", "win64"]
+windows_oses = ["win32", "win64"]
+current_os = platform.system().lower()
 
-def get_latest_tag():
-  url = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
-  req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+# Roll our own get request method to avoid extra deps
+def request(url: str):
+  # Explicitly set the headers to avoid User-Agent "Python-urllib/x.y"
+  # https://docs.python.org/3/howto/urllib2.html#headers
+  return Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+
+# Get the latest release tag from Github
+def get_latest_tag() -> str:
+  req = request(LATEST_RELEASE_URL)
+
   with urlopen(req) as response:
     data = response.read().decode('utf-8')
     import json
     return json.loads(data)["tag_name"]
 
+# Get OS specific binary name
+def get_binary_name() -> str:
+  return BIN_NAME + (".exe" if current_os in windows_oses else "")
+
+# Install latest cfn-guard to the os tmp directory
 def install_cfn_guard():
     latest_tag = get_latest_tag()
-    current_os = platform.system().lower()
+    binary_name = get_binary_name()
 
-    if current_os in ["linux", "darwin", "win32", "win64"]:
-        url = release_urls[current_os].replace("TAG", latest_tag)
+    if current_os in supported_oses:
+        url = release_urls_dict[current_os].replace("TAG", latest_tag)
         filename = os.path.basename(urlparse(url).path)
-        binary_name = "cfn-guard" + (".exe" if current_os in ["win32", "win64"] else "")
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            print(f"Downloading cfn-guard from {url} {temp_dir}")
-            req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            req = request(url)
             with urlopen(req) as response:
                 tar_path = os.path.join(temp_dir, filename)
                 with open(tar_path, "wb") as tar_file:
@@ -54,7 +70,6 @@ def install_cfn_guard():
                         break
 
             if binary_path is None:
-                print("Unable to find the extracted binary")
                 return
 
             tmp_dir = tempfile.gettempdir()
@@ -63,13 +78,14 @@ def install_cfn_guard():
             os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
             shutil.move(binary_path, dest_path)
-            print(f"cfn-guard binary installed in {dest_path}")
     else:
-        print("Unsupported operating system")
+        # This is unlikely to happen though worth covering
+        # in case the user attempts to use on another OS.
+        raise Exception(UNSUPPORTED_OS_MSG)
 
-def run_cfn_guard(args: Sequence[str]):
-    binary_name = "cfn-guard" + (".exe" if platform.system().lower() == "windows" else "")
+def run_cfn_guard(args: Sequence[str]) -> int:
     tmp_dir = tempfile.gettempdir()
+    binary_name = get_binary_name()
     binary_path = os.path.join(tmp_dir, binary_name)
 
     if os.path.exists(binary_path):
