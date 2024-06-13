@@ -9,7 +9,7 @@ from typing import Sequence
 from urllib.parse import urlparse, urlencode
 from urllib.request import Request, urlopen
 
-LATEST_RELEASE_URL = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest
+LATEST_RELEASE_URL = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
 
