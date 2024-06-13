@@ -13,6 +13,7 @@ import subprocess
 release_urls = {
   "darwin": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-macos-latest.tar.gz",
   "linux": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-ubuntu-latest.tar.gz",
+  # Map returns same release for win32 & win64
   "win32": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
   "win64": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
 }
@@ -78,7 +79,9 @@ def run_cfn_guard(args: Sequence[str]):
       # as a workaround. This is not ideal, but it works.
       cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
       project_root = os.path.dirname(os.path.abspath(__file__))
-      return subprocess.run(' '.join(cmd), shell=True, cwd=project_root)
+      process = subprocess.run(' '.join(cmd), shell=True, cwd=project_root)
+
+      return process.returncode
     else:
         install_cfn_guard()
         return run_cfn_guard(args)
