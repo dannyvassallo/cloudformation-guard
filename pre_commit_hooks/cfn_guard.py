@@ -72,7 +72,7 @@ def run_cfn_guard(args: Sequence[str]):
     tmp_dir = tempfile.gettempdir()
     binary_path = os.path.join(tmp_dir, binary_name)
     if os.path.exists(binary_path):
-        cmd = [binary_path] + list(args)
+        cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
         try:
             project_root = os.path.dirname(os.path.abspath(__file__))
             print(f"Running command: {cmd}")
