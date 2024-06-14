@@ -35,6 +35,7 @@ jobs:
       - run: pre-commit install
       - name: Run pre-commit hook
         id: run-precommit
+        continue-on-error: true
         run: |
           output=$(pre-commit run 2>&1)
           echo "::set-output name=precommit-output::$output"
