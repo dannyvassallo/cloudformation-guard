@@ -62,10 +62,10 @@ jobs:
       - run: pip install pre-commit
       - run: pre-commit install
       - name: Run pre-commit hook
+        shell: powershell
         run: |
-          output=$(pre-commit run 2>&1 || $true)
-          echo $output
-          if (!($output -match "exit code: 19")) {
-            echo "Expected output not found"
+          $output = (pre-commit run 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 19 -and $output -notmatch "exit code: 19") {
+            Write-Host "Expected output not found"
             exit 1
           }
