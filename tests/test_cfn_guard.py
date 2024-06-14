@@ -2,9 +2,11 @@
 This module tests that the main method accepts
 cfn-guard args and returns the expected error code
 """
+
 from __future__ import annotations
 
 from pre_commit_hooks.cfn_guard import main
+
 
 def test_failing_template():
     """Test a failing case."""

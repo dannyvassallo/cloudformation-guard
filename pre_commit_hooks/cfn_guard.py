@@ -14,7 +14,9 @@ from typing import Sequence
 from urllib.request import Request, urlopen
 
 # pylint: disable=C0301
-LATEST_RELEASE_URL = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
+LATEST_RELEASE_URL = (
+    "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
+)
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
 
@@ -32,6 +34,7 @@ supported_oses = ["linux", "darwin", "win32", "win64"]
 windows_oses = ["win32", "win64"]
 current_os = platform.system().lower()
 install_dir = os.path.join(os.path.expanduser("~"), ".cfn-guard-pre-commit")
+
 
 class CfnGuardPreCommitError(Exception):
     """Custom exception class for specific error scenarios."""
@@ -56,12 +59,14 @@ class CfnGuardPreCommitError(Exception):
             return f"{self.message} (Code: {self.code})"
         return self.message
 
+
 def request(url: str):
     """Roll our own get request method to avoid extra dependencies"""
 
     # Explicitly set the headers to avoid User-Agent "Python-urllib/x.y"
     # https://docs.python.org/3/howto/urllib2.html#headers
     return Request(url, headers={"User-Agent": "Mozilla/5.0"})
+
 
 def get_latest_tag() -> str:
     """Get the latest release tag from Github"""
@@ -72,10 +77,12 @@ def get_latest_tag() -> str:
         data = response.read().decode("utf-8")
         return json.loads(data)["tag_name"]
 
+
 def get_binary_name() -> str:
     """Get an OS specific binary name"""
 
     return BIN_NAME + (".exe" if current_os in windows_oses else "")
+
 
 def install_cfn_guard():
     """
@@ -118,6 +125,7 @@ def install_cfn_guard():
     else:
         raise CfnGuardPreCommitError(UNSUPPORTED_OS_MSG, code=1)
 
+
 def run_cfn_guard(args: Sequence[str]) -> int:
     """Pass arguments to and run cfn-guard"""
 
@@ -140,6 +148,7 @@ def run_cfn_guard(args: Sequence[str]) -> int:
         # Install cfn-guard if it doesn't exist and then run it.
         install_cfn_guard()
         return run_cfn_guard(args)
+
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Entry point for the pre-commit hook"""
