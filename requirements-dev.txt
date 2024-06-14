@@ -1,5 +1,4 @@
-covdefaults
-coverage
 pytest
-requests
-colorama
+mypy
+pylint
+black

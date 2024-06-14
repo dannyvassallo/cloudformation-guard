@@ -24,7 +24,6 @@ windows_oses = ["win32", "win64"]
 current_os = platform.system().lower()
 install_dir = os.path.join(os.path.expanduser("~"), ".cfn-guard-pre-commit")
 
-
 # Roll our own get request method to avoid extra dependencies
 def request(url: str):
   # Explicitly set the headers to avoid User-Agent "Python-urllib/x.y"
