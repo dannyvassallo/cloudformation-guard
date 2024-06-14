@@ -35,16 +35,11 @@ jobs:
       - run: pre-commit install
       - name: Run pre-commit hook
         id: run-precommit
-        continue-on-error: true
         run: |
           output=$(pre-commit run 2>&1 || true)
-          echo "::set-output name=precommit-output::$output"
           exit_code=$?
           echo "pre-commit exit code: $exit_code"
-      - name: Check pre-commit output
-        run: |
-          echo "${{ steps.run-precommit.outputs.precommit-output }}"
-          if ! echo "${{ steps.run-precommit.outputs.precommit-output }}" | grep -q "hook id: cfn-guard\n- exit code: 19"; then
+          if ! echo $output | grep -q "hook id: cfn-guard\n- exit code: 19"; then
             echo "Expected output not found"
             exit 1
           fi
