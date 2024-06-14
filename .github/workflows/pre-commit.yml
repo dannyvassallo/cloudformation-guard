@@ -45,11 +45,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.7'
-          architecture: 'x64'
-      - run: pip3 install --upgrade pip
       - run: brew install pre-commit
       - run: pre-commit install
       - name: Run pre-commit hook
