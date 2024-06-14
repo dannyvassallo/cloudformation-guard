@@ -34,7 +34,25 @@ jobs:
       - run: sudo apt-get install pre-commit
       - run: pre-commit install
       - name: Run pre-commit hook
-        id: run-precommit
+        run: |
+          output=$(pre-commit run 2>&1 || true)
+          echo $output
+          if ! echo $output | grep -q "exit code: 19"; then
+            echo "Expected output not found"
+            exit 1
+          fi
+  integ-test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - run: pip3 install --upgrade pip
+      - run: brew install pre-commit
+      - run: pre-commit install
+      - name: Run pre-commit hook
         run: |
           output=$(pre-commit run 2>&1 || true)
           echo $output
