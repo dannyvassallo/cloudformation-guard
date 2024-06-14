@@ -1,3 +1,8 @@
+"""
+This module contains the logic for the cfn-guard pre-commit hook
+"""
+
+import json
 import os
 import platform
 import shutil
@@ -6,19 +11,20 @@ import sys
 import tarfile
 import tempfile
 from typing import Sequence
-from urllib.parse import urlparse, urlencode
 from urllib.request import Request, urlopen
 
-LATEST_RELEASE_URL = (
-    "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
-)
+LATEST_RELEASE_URL = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
 
 release_urls_dict = {
+    # pylint: disable=C0301
     "darwin": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-macos-latest.tar.gz",
+    # pylint: disable=C0301
     "linux": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-ubuntu-latest.tar.gz",
+    # pylint: disable=C0301
     "win32": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
+    # pylint: disable=C0301
     "win64": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
 }
 supported_oses = ["linux", "darwin", "win32", "win64"]
@@ -26,34 +32,56 @@ windows_oses = ["win32", "win64"]
 current_os = platform.system().lower()
 install_dir = os.path.join(os.path.expanduser("~"), ".cfn-guard-pre-commit")
 
+class CfnGuardPreCommitError(Exception):
+    """Custom exception class for specific error scenarios."""
 
-# Roll our own get request method to avoid extra dependencies
+    def __init__(self, message, code=None):
+        """
+        Initialize the CfnGuardPreCommitError object.
+
+        Args:
+            message (str): The error message.
+            code (int, optional): An optional error code.
+        """
+        self.message = message
+        self.code = code
+        super().__init__(message)
+
+    def __str__(self):
+        """
+        Return a string representation of the CfnGuardPreCommitError object.
+        """
+        if self.code is not None:
+            return f"{self.message} (Code: {self.code})"
+        return self.message
+
 def request(url: str):
+    """Roll our own get request method to avoid extra dependencies"""
+
     # Explicitly set the headers to avoid User-Agent "Python-urllib/x.y"
     # https://docs.python.org/3/howto/urllib2.html#headers
     return Request(url, headers={"User-Agent": "Mozilla/5.0"})
 
-
-# Get the latest release tag from Github
 def get_latest_tag() -> str:
+    """Get the latest release tag from Github"""
+
     req = request(LATEST_RELEASE_URL)
 
     with urlopen(req) as response:
         data = response.read().decode("utf-8")
-        import json
-
         return json.loads(data)["tag_name"]
 
-
-# Get an OS specific binary name
 def get_binary_name() -> str:
+    """Get an OS specific binary name"""
+
     return BIN_NAME + (".exe" if current_os in windows_oses else "")
 
-
-# Install the latest cfn-guard to the install_dir to avoid
-# global version conflicts with existing installations, rust,
-# and cargo
 def install_cfn_guard():
+    """
+    Install the latest cfn-guard to the install_dir to avoid
+    global version conflicts with existing installations, rust,
+    and cargo.
+    """
     latest_tag = get_latest_tag()
     binary_name = get_binary_name()
 
@@ -67,7 +95,6 @@ def install_cfn_guard():
         # Create the install_dir if it doesn't exist
         os.makedirs(install_dir, exist_ok=True)
 
-        # Extract tarball members to install_dir
         with tarfile.open(temp_file.name, "r:gz") as tar:
             # Extract tarball members to install_dir
             for member in tar.getmembers():
@@ -88,11 +115,11 @@ def install_cfn_guard():
         os.chmod(binary_path, 0o755)
         os.remove(temp_file.name)
     else:
-        raise Exception(UNSUPPORTED_OS_MSG)
+        raise CfnGuardPreCommitError(UNSUPPORTED_OS_MSG, code=1)
 
-
-# Pass arguments to and run cfn-guard
 def run_cfn_guard(args: Sequence[str]) -> int:
+    """Pass arguments to and run cfn-guard"""
+
     binary_name = get_binary_name()
     binary_path = os.path.join(install_dir, binary_name)
 
@@ -104,7 +131,7 @@ def run_cfn_guard(args: Sequence[str]) -> int:
         cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
         project_root = os.path.dirname(os.path.abspath(__file__))
         try:
-            result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True)
+            result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
             return result.returncode
         except subprocess.CalledProcessError as e:
             return e.returncode
@@ -113,9 +140,9 @@ def run_cfn_guard(args: Sequence[str]) -> int:
         install_cfn_guard()
         return run_cfn_guard(args)
 
-
-# Entry point for the pre-commit hook
 def main(argv: Sequence[str] | None = None) -> int:
+    """Entry point for the pre-commit hook"""
+
     # This only serves to chop the first arg (the filename) when running the script directly
     if argv is None:
         argv = sys.argv[1:]
