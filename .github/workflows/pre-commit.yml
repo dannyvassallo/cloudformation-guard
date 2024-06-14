@@ -1,0 +1,22 @@
+name: Pre-Commit Hook CI
+on:
+  push:
+    paths:
+      - 'pre_commit_hooks/**'
+      - 'tests/**'
+  pull_request:
+    paths:
+      - 'pre_commit_hooks/**'
+      - 'tests/**'
+jobs:
+  run-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+      - name: Run unit tests
+        run:  pytest ./tests/
