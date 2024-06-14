@@ -38,7 +38,7 @@ jobs:
         run: |
           output=$(pre-commit run 2>&1 || true)
           echo $output
-          if ! echo $output | grep -q "hook id: cfn-guard\n- exit code: 19"; then
+          if ! echo $output | grep -q "exit code: 19"; then
             echo "Expected output not found"
             exit 1
           fi
