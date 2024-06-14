@@ -19,6 +19,6 @@ jobs:
           python-version: '3.x'
           architecture: 'x64'
       - run: pip install -r requirements-dev.txt
-      - run: pylint --disable=bare-except,invalid-name --class-rgx='[A-Z][a-z]+' --generate-rcfile
+      - run: find . -iname '*.py' | xargs pylint
       - run: pytest ./tests/
       - run: black --check .
