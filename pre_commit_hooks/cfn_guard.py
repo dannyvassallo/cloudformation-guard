@@ -58,6 +58,9 @@ def install_cfn_guard():
             with urlopen(url) as response:
                 shutil.copyfileobj(response, temp_file)
 
+        # Create the install_dir if it doesn't exist
+        os.makedirs(install_dir, exist_ok=True)
+
         # Extract tarball members to install_dir
         with tarfile.open(temp_file.name, "r:gz") as tar:
           # Extract tarball members to install_dir
