@@ -33,4 +33,18 @@ jobs:
       - run: pip install --upgrade pip
       - run: sudo apt-get install pre-commit
       - run: pre-commit install
-      - run: pre-commit run
+      - name: Run pre-commit hook
+        id: run-precommit
+        run: |
+          output=$(pre-commit run 2>&1)
+          echo "::set-output name=precommit-output::$output"
+          exit_code=$?
+          echo "pre-commit exit code: $exit_code"
+      - name: Check pre-commit output
+        if: steps.run-precommit.outputs.precommit-output != ''
+        run: |
+          echo "${{ steps.run-precommit.outputs.precommit-output }}"
+          if ! echo "${{ steps.run-precommit.outputs.precommit-output }}" | grep -q "hook id: cfn-guard\n- exit code: 19"; then
+            echo "Expected output not found"
+            exit 1
+          fi
