@@ -50,3 +50,22 @@ jobs:
             echo "Expected output not found"
             exit 1
           fi
+  integ-test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - run: pip install --upgrade pip
+      - run: pip install pre-commit
+      - run: pre-commit install
+      - name: Run pre-commit hook
+        run: |
+          output=$(pre-commit run 2>&1 || $true)
+          echo $output
+          if (!($output -match "exit code: 19")) {
+            echo "Expected output not found"
+            exit 1
+          }
