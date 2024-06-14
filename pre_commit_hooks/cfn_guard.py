@@ -13,6 +13,7 @@ import tempfile
 from typing import Sequence
 from urllib.request import Request, urlopen
 
+# pylint: disable=C0301
 LATEST_RELEASE_URL = "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
