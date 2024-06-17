@@ -137,7 +137,7 @@ def run_cfn_guard(args: Sequence[str]) -> int:
         cmd = [binary_path] + list(args)
         print(f"Running: {' '.join(cmd)}")
         try:
-            result = subprocess.run(r' '.join(cmd), cwd=project_root, shell=True, check=True)
+            result = subprocess.run(r" ".join(cmd), cwd=project_root, shell=True, check=True)
             return result.returncode
         except subprocess.CalledProcessError as e:
             return e.returncode
