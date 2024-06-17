@@ -26,12 +26,8 @@ release_urls_dict = {
     # pylint: disable=C0301
     "linux": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-ubuntu-latest.tar.gz",
     # pylint: disable=C0301
-    "win32": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
-    # pylint: disable=C0301
-    "win64": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
-}
-supported_oses = ["linux", "darwin", "win32", "win64"]
-windows_oses = ["win32", "win64"]
+    "windows": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
+supported_oses = ["linux", "darwin", "windows"]
 current_os = platform.system().lower()
 install_dir = os.path.join(os.path.expanduser("~"), ".cfn-guard-pre-commit")
 
@@ -81,7 +77,7 @@ def get_latest_tag() -> str:
 def get_binary_name() -> str:
     """Get an OS specific binary name"""
 
-    return BIN_NAME + (".exe" if current_os in windows_oses else "")
+    return BIN_NAME + (".exe" if current_os == "windows" else "")
 
 
 def install_cfn_guard():
