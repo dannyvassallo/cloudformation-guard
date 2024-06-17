@@ -5,5 +5,5 @@ repos:
         -   id: cfn-guard
             args:
                 - validate
-                - --rules='guard\resources\validate\rules-dir\'
-                - --data='guard\resources\validate\data-dir\'
+                - --rules='guard/resources/validate/rules'
+                - --data='guard/resources/validate/data'
