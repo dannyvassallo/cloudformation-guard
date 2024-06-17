@@ -135,6 +135,7 @@ def run_cfn_guard(args: Sequence[str]) -> int:
         # the directory inside the subprocess via the cd command to the current working directory
         # as a workaround. This is not ideal, but it works.
         cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
+        print(f"Running: {' '.join(cmd)}")
         project_root = os.path.dirname(os.path.abspath(__file__))
         try:
             result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
