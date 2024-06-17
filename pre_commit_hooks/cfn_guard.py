@@ -130,16 +130,21 @@ def run_cfn_guard(args: Sequence[str]) -> int:
     binary_path = os.path.join(install_dir, binary_name)
 
     if os.path.exists(binary_path):
-        # When executing the binary from within pre-commit (vs executing the script directly),
-        # the subprocess doesn't seem to honor cwd to the project root. Instead, we change
-        # the directory inside the subprocess via the cd command to the current working directory
-        # as a workaround. This is not ideal, but it works.
-        cmd = [f"cd {os.getcwd()} &&", binary_path] + list(args)
-        cmd.insert(1, "dir &&")
+        cmd = [binary_path] + list(args)
         print(f"Running: {' '.join(cmd)}")
         project_root = os.path.dirname(os.path.abspath(__file__))
+
         try:
-            result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
+            if current_os == "windows":
+                subprocess.run(["dir"], cwd=project_root, shell=True, check=True)
+                result = subprocess.run(cmd, cwd=project_root, shell=True, check=True)
+            else:
+                # When executing the binary from within pre-commit (vs executing the script directly),
+                # the subprocess doesn't seem to honor cwd to the project root. Instead, we change
+                # the directory inside the subprocess via the cd command to the current working directory
+                # as a workaround. This is not ideal, but it works.
+                result = subprocess.run([f"cd {os.getcwd()}; dir; {' '.join(cmd)}"], cwd=project_root, shell=True, check=True)
+
             return result.returncode
         except subprocess.CalledProcessError as e:
             return e.returncode
