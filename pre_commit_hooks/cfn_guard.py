@@ -27,6 +27,7 @@ release_urls_dict = {
     "linux": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-ubuntu-latest.tar.gz",
     # pylint: disable=C0301
     "windows": "https://github.com/aws-cloudformation/cloudformation-guard/releases/download/TAG/cfn-guard-v3-windows-latest.tar.gz",
+}
 supported_oses = ["linux", "darwin", "windows"]
 current_os = platform.system().lower()
 install_dir = os.path.join(os.path.expanduser("~"), ".cfn-guard-pre-commit")
