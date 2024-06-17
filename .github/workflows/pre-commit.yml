@@ -54,10 +54,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.7'
-          architecture: 'x64'
       - run: pip install --upgrade pip
       - run: pip install pre-commit
       - run: pre-commit install
@@ -65,7 +61,7 @@ jobs:
         shell: powershell
         run: |
           $output = (pre-commit run 2>&1 | Out-String)
-          Write-Output $output  # Print the output
+          Write-Output $output
           if ($LASTEXITCODE -ne 19 -and $output -notmatch "exit code: 19") {
             Write-Host "Expected output not found"
             exit 1
