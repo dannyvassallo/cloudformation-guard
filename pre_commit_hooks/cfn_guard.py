@@ -123,7 +123,7 @@ def install_cfn_guard():
         os.chmod(binary_path, 0o755)
         os.remove(temp_file.name)
     else:
-        raise CfnGuardPreCommitError("{UNSUPPORTED_OS_MSG}: {current_os}", code=1)
+        raise CfnGuardPreCommitError(f"{UNSUPPORTED_OS_MSG}: {current_os}", code=1)
 
 
 def run_cfn_guard(args: Sequence[str]) -> int:
