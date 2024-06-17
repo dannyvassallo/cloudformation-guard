@@ -65,6 +65,7 @@ jobs:
       - name: Run pre-commit hook
         shell: powershell
         run: |
+          dir
           $output = (pre-commit run 2>&1 | Out-String)
           Write-Output $output
           if ($LASTEXITCODE -ne 19 -and $output -notmatch "exit code: 19") {
