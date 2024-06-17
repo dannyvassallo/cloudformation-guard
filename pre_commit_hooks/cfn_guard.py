@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+from pathlib import Path
 from typing import Sequence
 from urllib.request import Request, urlopen
 
@@ -127,18 +128,14 @@ def run_cfn_guard(args: Sequence[str]) -> int:
     """Pass arguments to and run cfn-guard"""
 
     binary_name = get_binary_name()
-    binary_path = os.path.join(install_dir, binary_name)
+    binary_path: str = str(Path(os.path.join(install_dir, binary_name)))
 
     if os.path.exists(binary_path):
-        # When executing the binary from within pre-commit (vs executing the script directly),
-        # the subprocess doesn't seem to honor cwd to the project root. Instead, we change
-        # the directory inside the subprocess via the cd command to the current working directory
-        # as a workaround. This is not ideal, but it works.
-        cmd = [f"cd {os.getcwd()}; dir;", binary_path] + list(args)
+        project_root: str = str(Path(os.path.dirname(os.path.abspath(__file__))))
+        cmd = [binary_path] + list(args)
         print(f"Running: {' '.join(cmd)}")
-        project_root = os.path.dirname(os.path.abspath(__file__))
         try:
-            result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
+            result = subprocess.run(r' '.join(cmd), cwd=project_root, shell=True, check=True)
             return result.returncode
         except subprocess.CalledProcessError as e:
             return e.returncode
