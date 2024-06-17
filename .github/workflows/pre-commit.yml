@@ -54,7 +54,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - run: choco install python --version=3.7.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
       - run: pip install pre-commit
       - run: pre-commit install
       - name: Run pre-commit hook
