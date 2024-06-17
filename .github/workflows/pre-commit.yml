@@ -65,6 +65,7 @@ jobs:
           $null = pre-commit run 2>&1 | Tee-Object -Variable output
           Write-Output $output
           if ($output -notmatch "exit code: 19") {
+              Write-Output $output
               Write-Host "Expected output not found"
               exit 1
           }
