@@ -131,7 +131,9 @@ def run_cfn_guard(args: Sequence[str]) -> int:
     binary_path: str = str(Path(os.path.join(install_dir, binary_name)))
 
     if os.path.exists(binary_path):
-        project_root: str = str(Path(os.path.dirname(os.path.abspath(__file__))))
+        project_root: str = os.getcwd()
+        print(f"Using cfn-guard binary at: {binary_path}")
+        print(f"Project root: {project_root}")
         cmd = [binary_path] + list(args)
         print(f"Running: {' '.join(cmd)}")
         try:
