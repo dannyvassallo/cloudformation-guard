@@ -27,6 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get install pre-commit
+      - run: mv .pre-commit-config-unix.yaml .pre-commit-config.yaml
       - run: pre-commit install
       - name: Run pre-commit hook
         run: |
@@ -41,6 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: brew install pre-commit
+      - run: mv .pre-commit-config-unix.yaml .pre-commit-config.yaml
       - run: pre-commit install
       - name: Run pre-commit hook
         run: |
@@ -58,6 +60,7 @@ jobs:
         with:
           python-version: '3.10.0'
       - run: pip install pre-commit
+      - run: Rename-Item -Path .pre-commit-config-win.yaml -NewName .pre-commit-config.yaml
       - run: pre-commit install
       - name: Run pre-commit hook
         shell: powershell
