@@ -66,5 +66,6 @@ jobs:
           Write-Output $output
           if ($output -notmatch "exit code: 19") {
               Write-Host "Expected output not found"
+              Write-Host $output
               exit 1
           }
