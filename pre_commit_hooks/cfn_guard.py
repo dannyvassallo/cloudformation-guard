@@ -11,7 +11,7 @@ import sys
 import tarfile
 import tempfile
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Union
 from urllib.request import Request, urlopen
 
 # pylint: disable=C0301
@@ -132,12 +132,10 @@ def run_cfn_guard(args: Sequence[str]) -> int:
 
     if os.path.exists(binary_path):
         project_root: str = os.getcwd()
-        print(f"Using cfn-guard binary at: {binary_path}")
-        print(f"Project root: {project_root}")
         cmd = [binary_path] + list(args)
-        print(f"Running: {' '.join(cmd)}")
+
         try:
-            result = subprocess.run(r" ".join(cmd), cwd=project_root, shell=True, check=True)
+            result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
             return result.returncode
         except subprocess.CalledProcessError as e:
             return e.returncode
@@ -147,7 +145,7 @@ def run_cfn_guard(args: Sequence[str]) -> int:
         return run_cfn_guard(args)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Union[Sequence[str], None] = None) -> int:
     """Entry point for the pre-commit hook"""
 
     # This only serves to chop the first arg (the filename) when running the script directly
