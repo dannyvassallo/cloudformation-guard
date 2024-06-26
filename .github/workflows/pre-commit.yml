@@ -3,11 +3,11 @@ on:
   push:
     paths:
       - 'pre_commit_hooks/**'
-      - 'tests/**'
+      - 'pre_commit_hooks_tests/**'
   pull_request:
     paths:
       - 'pre_commit_hooks/**'
-      - 'tests/**'
+      - 'pre_commit_hooks_tests/**'
 jobs:
   run-unit-tests-and-lint:
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
           architecture: 'x64'
       - run: pip install -r requirements-dev.txt
       - run: find . -iname '*.py' | xargs pylint
-      - run: pytest ./tests/
+      - run: pytest ./pre_commit_hooks_tests/
       - run: black --check .
   integ-test-linux:
     runs-on: ubuntu-latest
