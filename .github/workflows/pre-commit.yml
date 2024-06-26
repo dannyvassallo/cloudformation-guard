@@ -62,7 +62,7 @@ jobs:
       - name: Run pre-commit hook
         shell: powershell
         run: |
-          $output = (pre-commit run *>&1 | Out-String)
+          $output = & pre-commit run *>&1
           Write-Output $output
           if ($output -notmatch "exit code: 19") {
               Write-Host "Expected output not found"
