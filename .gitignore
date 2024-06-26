@@ -16,3 +16,4 @@ node_modules
 lib
 bin
 __pycache__
+pyvenv.cfg
