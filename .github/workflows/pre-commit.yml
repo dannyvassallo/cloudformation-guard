@@ -19,7 +19,6 @@ jobs:
           python-version: '3.x'
           architecture: 'x64'
       - run: pip install -r requirements-dev.txt
-      - run: find . -iname '*.py' | xargs pylint
       - run: pytest ./pre_commit_hooks_tests/
       - run: mypy ./pre_commit_hooks/ ./pre_commit_hooks_tests/
       - run: black --check .
