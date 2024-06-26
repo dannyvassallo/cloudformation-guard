@@ -20,6 +20,7 @@ jobs:
           architecture: 'x64'
       - run: pip install -r requirements-dev.txt
       - run: pytest ./pre_commit_hooks_tests/
+      - run: ruff check ./pre_commit_hooks_tests/ ./pre_commit_hooks
       - run: mypy ./pre_commit_hooks/ ./pre_commit_hooks_tests/
       - run: black --check .
   integ-test-linux:
