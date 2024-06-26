@@ -62,10 +62,11 @@ jobs:
       - name: Run pre-commit hook
         shell: powershell
         run: |
-          $output = Invoke-Expression "pre-commit run *>&1"
-          Write-Output $output
-          if ($output -notmatch '(?s).*exit code.*') {
-              Write-Host "Expected output not found"
-              Write-Host $output
-              exit 1
+          $output = pre-commit run | Out-String
+          if ($output | Select-String -Pattern "exit code: 19") {
+              exit 0
+          } else {
+            Write-Host "Expected output not found"
+            Write-Host $output
+            exit 1
           }
