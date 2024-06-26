@@ -21,7 +21,7 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: find . -iname '*.py' | xargs pylint
       - run: pytest ./pre_commit_hooks_tests/
-      - run: mypy ./pre_commit_hooks/ ./pre_commit_hooks_test/
+      - run: mypy ./pre_commit_hooks/ ./pre_commit_hooks_tests/
       - run: black --check .
   integ-test-linux:
     runs-on: ubuntu-latest
