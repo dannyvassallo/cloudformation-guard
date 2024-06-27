@@ -31203,6 +31203,7 @@ function getConfig() {
         createReview: core.getBooleanInput('create-review'),
         dataPath: core.getInput('data'),
         debug: core.getBooleanInput('debug'),
+        path: core.getInput('path'),
         rulesPath: core.getInput('rules'),
         token: core.getInput('token')
     };
@@ -31505,6 +31506,7 @@ const stringEnums_1 = __nccwpck_require__(4916);
 const checkoutRepository_1 = __nccwpck_require__(9274);
 const github_1 = __nccwpck_require__(5438);
 const debugLog_1 = __nccwpck_require__(498);
+const exec_1 = __nccwpck_require__(1514);
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 const handlePullRequestRun_1 = __nccwpck_require__(4879);
 const handlePushRun_1 = __nccwpck_require__(5802);
@@ -31517,11 +31519,14 @@ const uploadCodeScan_1 = __nccwpck_require__(1806);
  */
 async function run() {
     (0, debugLog_1.debugLog)(`Running action`);
-    const { analyze, checkout } = (0, getConfig_1.default)();
+    const { analyze, checkout, path } = (0, getConfig_1.default)();
     const { eventName } = github_1.context;
     (0, debugLog_1.debugLog)(`Event type: ${eventName}`);
     if (checkout) {
         await (0, checkoutRepository_1.checkoutRepository)();
+    }
+    if (path.length) {
+        (0, exec_1.exec)(`cd ${path}`);
     }
     try {
         const result = await (0, handleValidate_1.handleValidate)();
