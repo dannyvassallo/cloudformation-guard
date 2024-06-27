@@ -1,3 +1,4 @@
+import * as core from '@actions/core';
 import getConfig from './getConfig';
 
 /**
@@ -8,7 +9,7 @@ import getConfig from './getConfig';
 export function debugLog(msg: string): void {
   const { debug } = getConfig();
   if (debug) {
-    console.debug(msg);
+    core.info(msg);
   }
 }
 
