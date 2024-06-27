@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import { ErrorStrings, GithubEventNames } from './stringEnums';
 import { checkoutRepository } from './checkoutRepository';
 import { context } from '@actions/github';
+import { debugLog } from './debugLog';
 import getConfig from './getConfig';
 import { handlePullRequestRun } from './handlePullRequestRun';
 import { handlePushRun } from './handlePushRun';
@@ -14,9 +15,10 @@ import { uploadCodeScan } from './uploadCodeScan';
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
+  debugLog(`Running action`);
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
-
+  debugLog(`Event type: ${eventName}`);
   checkout && (await checkoutRepository());
 
   try {
@@ -24,9 +26,9 @@ export async function run(): Promise<void> {
     const {
       runs: [sarifRun]
     } = result;
-
     if (sarifRun.results.length) {
       if (analyze) {
+        debugLog(`Using analyze`);
         core.setFailed(
           `${ErrorStrings.VALIDATION_FAILURE} ${ErrorStrings.SECURITY_TAB}`
         );

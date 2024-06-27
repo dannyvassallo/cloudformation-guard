@@ -1,6 +1,7 @@
 import { context, getOctokit } from '@actions/github';
 import { ErrorStrings } from './stringEnums';
 import { SarifRun } from 'cfn-guard';
+import debugLog from './debugLog';
 import getConfig from './getConfig';
 
 export type HandlePullRequestRunParams = {
@@ -41,6 +42,10 @@ export async function handleCreateReview({
     filesWithViolationsInPr.includes(comment.path)
   );
 
+  debugLog(
+    `Creating a review with comments: ${JSON.stringify(comments, null, 2)}`
+  );
+
   for (const comment of comments) {
     try {
       await octokit.rest.pulls.createReview({
@@ -70,6 +75,8 @@ export async function handleCreateReview({
 export async function handlePullRequestRun({
   run
 }: HandlePullRequestRunParams): Promise<string[][]> {
+  debugLog(`Handling PR run...`);
+
   const MAX_PER_PAGE = 3000;
   const { token, createReview } = getConfig();
   const octokit = getOctokit(token);
@@ -87,6 +94,8 @@ export async function handlePullRequestRun({
 
   const filesChanged = listFiles.data.map(({ filename }) => filename);
 
+  debugLog(`Files changed: ${JSON.stringify(filesChanged, null, 2)}`);
+
   const tmpComments = run.results.map(result => ({
     body: result.message.text,
     path: result.locations[0].physicalLocation.artifactLocation.uri,
@@ -97,6 +106,10 @@ export async function handlePullRequestRun({
 
   const filesWithViolationsInPr = filesChanged.filter(value =>
     filesWithViolations.includes(value)
+  );
+
+  debugLog(
+    `Files with violations in PR: ${JSON.stringify(filesWithViolationsInPr, null, 2)}`
   );
 
   filesWithViolationsInPr.length &&
