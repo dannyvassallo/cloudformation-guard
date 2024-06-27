@@ -31527,11 +31527,15 @@ async function run() {
     }
     if (path.length) {
         try {
-            (0, exec_1.exec)(`/bin/bash -c "cd ${path}"`);
+            await (0, exec_1.exec)(`/bin/bash -c "cd ${path}"`);
+            await (0, exec_1.exec)(`/bin/bash -c "pwd"`);
+            await (0, exec_1.exec)(`/bin/bash -c "ls"`);
         }
         catch {
             try {
-                (0, exec_1.exec)(`cmd /c "cd ${path}"`);
+                await (0, exec_1.exec)(`cmd /c "cd ${path}"`);
+                await (0, exec_1.exec)(`cmd /c "pwd"`);
+                await (0, exec_1.exec)(`cmd /c "dir"`);
             }
             catch {
                 core.setFailed(stringEnums_1.ErrorStrings.PATH_ERROR);

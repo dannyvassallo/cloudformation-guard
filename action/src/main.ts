@@ -25,10 +25,14 @@ export async function run(): Promise<void> {
   }
   if (path.length) {
     try {
-      exec(`/bin/bash -c "cd ${path}"`);
+      await exec(`/bin/bash -c "cd ${path}"`);
+      await exec(`/bin/bash -c "pwd"`);
+      await exec(`/bin/bash -c "ls"`);
     } catch {
       try {
-        exec(`cmd /c "cd ${path}"`);
+        await exec(`cmd /c "cd ${path}"`);
+        await exec(`cmd /c "pwd"`);
+        await exec(`cmd /c "dir"`);
       } catch {
         core.setFailed(ErrorStrings.PATH_ERROR);
       }
