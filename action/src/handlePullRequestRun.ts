@@ -104,8 +104,6 @@ export async function handlePullRequestRun({
 
   const filesWithViolations = tmpComments.map(({ path }) => path);
 
-  throw Error(JSON.stringify(filesWithViolations));
-
   const filesWithViolationsInPr = filesChanged.filter(value =>
     filesWithViolations.includes(value)
   );
