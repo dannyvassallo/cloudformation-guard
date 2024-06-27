@@ -91,7 +91,7 @@ export async function handlePullRequestRun({
     per_page: MAX_PER_PAGE,
     pull_number: pull_request.number
   });
-
+  console.error(listFiles);
   const filesChanged = listFiles.data.map(({ filename }) => filename);
 
   debugLog(`Files changed: ${JSON.stringify(filesChanged, null, 2)}`);
@@ -103,6 +103,8 @@ export async function handlePullRequestRun({
   }));
 
   const filesWithViolations = tmpComments.map(({ path }) => path);
+
+  throw Error(JSON.stringify(filesWithViolations));
 
   const filesWithViolationsInPr = filesChanged.filter(value =>
     filesWithViolations.includes(value)
