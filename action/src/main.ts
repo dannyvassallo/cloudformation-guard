@@ -15,8 +15,6 @@ import { uploadCodeScan } from './uploadCodeScan';
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
-  core.notice('WHY DOESNT THIS WORK');
-  core.setFailed('Running action');
   debugLog(`Running action`);
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
