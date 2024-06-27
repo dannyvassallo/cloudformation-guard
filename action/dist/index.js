@@ -31526,7 +31526,17 @@ async function run() {
         await (0, checkoutRepository_1.checkoutRepository)();
     }
     if (path.length) {
-        (0, exec_1.exec)(`cd ${path}`);
+        try {
+            (0, exec_1.exec)(`/bin/bash -c "cd ${path}"`);
+        }
+        catch {
+            try {
+                (0, exec_1.exec)(`cmd /c "cd ${path}"`);
+            }
+            catch {
+                core.setFailed(stringEnums_1.ErrorStrings.PATH_ERROR);
+            }
+        }
     }
     try {
         const result = await (0, handleValidate_1.handleValidate)();
@@ -31583,6 +31593,7 @@ var ErrorStrings;
     ErrorStrings["PULL_REQUEST_ERROR"] = "Tried to handle pull request result but could not find PR context.";
     ErrorStrings["VALIDATION_FAILURE"] = "Validation failure. cfn-guard found violations.";
     ErrorStrings["SECURITY_TAB"] = "Check the security tab for results.";
+    ErrorStrings["PATH_ERROR"] = "Could not navigate to supplied path. Either path is wrong or the runner is using an unsupported operating system.";
 })(ErrorStrings || (exports.ErrorStrings = ErrorStrings = {}));
 var SummaryStrings;
 (function (SummaryStrings) {

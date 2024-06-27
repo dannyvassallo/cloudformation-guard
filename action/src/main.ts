@@ -24,7 +24,15 @@ export async function run(): Promise<void> {
     await checkoutRepository();
   }
   if (path.length) {
-    exec(`cd ${path}`);
+    try {
+      exec(`/bin/bash -c "cd ${path}"`);
+    } catch {
+      try {
+        exec(`cmd /c "cd ${path}"`);
+      } catch {
+        core.setFailed(ErrorStrings.PATH_ERROR);
+      }
+    }
   }
   try {
     const result = await handleValidate();
