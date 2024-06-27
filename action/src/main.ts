@@ -21,8 +21,9 @@ export async function run(): Promise<void> {
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
   debugLog(`Event type: ${eventName}`);
-  checkout && (await checkoutRepository());
-
+  if (checkout) {
+    await checkoutRepository();
+  }
   try {
     const result = await handleValidate();
     const {
