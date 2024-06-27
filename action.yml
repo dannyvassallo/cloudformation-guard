@@ -35,6 +35,10 @@ inputs:
     description: 'Turn on logs for debugging'
     required: false
     default: 'false'
+  path:
+    description: 'Path if not using checkout and repo is cloned to a subdirectory'
+    required: false
+    default: ''
 
 outputs:
   report:
