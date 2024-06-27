@@ -16,7 +16,7 @@ import { uploadCodeScan } from './uploadCodeScan';
  */
 export async function run(): Promise<void> {
   console.warn('WHY DOESNT THIS WORK');
-  core.info('Running action');
+  core.setFailed('Running action');
   debugLog(`Running action`);
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
