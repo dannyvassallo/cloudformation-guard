@@ -99,7 +99,7 @@ export async function handlePullRequestRun({
 
   const tmpComments = run.results.map(result => {
     const uri = result.locations[0].physicalLocation.artifactLocation.uri;
-    const path = root.length ? removeRootPath(uri) : uri;
+    const path = root?.length ? removeRootPath(uri) : uri;
     return {
       body: result.message.text,
       path,
@@ -132,7 +132,7 @@ export async function handlePullRequestRun({
     .map(({ locations: [location], ruleId, message: { text } }) => {
       const uri = location.physicalLocation.artifactLocation.uri;
       return filesWithViolationsInPr.includes(
-        root.length ? removeRootPath(uri) : uri
+        root?.length ? removeRootPath(uri) : uri
       )
         ? [
             `❌ ${uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
