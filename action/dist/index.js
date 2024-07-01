@@ -31684,7 +31684,10 @@ exports.addRootPath = addRootPath;
 function removeRootPath(uri) {
     const { path } = (0, getConfig_1.default)();
     if (uri.startsWith(path)) {
-        return uri.slice(path.length);
+        const pathWithoutRoot = uri.slice(path.length);
+        return pathWithoutRoot.startsWith('/')
+            ? pathWithoutRoot.slice(1)
+            : pathWithoutRoot;
     }
     return uri;
 }

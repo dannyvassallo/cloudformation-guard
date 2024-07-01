@@ -27,7 +27,10 @@ export function addRootPath(path: string): string {
 export function removeRootPath(uri: string): string {
   const { path } = getConfig();
   if (uri.startsWith(path)) {
-    return uri.slice(path.length);
+    const pathWithoutRoot = uri.slice(path.length);
+    return pathWithoutRoot.startsWith('/')
+      ? pathWithoutRoot.slice(1)
+      : pathWithoutRoot;
   }
   return uri;
 }
