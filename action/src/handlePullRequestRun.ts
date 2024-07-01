@@ -3,6 +3,7 @@ import { ErrorStrings } from './stringEnums';
 import { SarifRun } from 'cfn-guard';
 import debugLog from './debugLog';
 import getConfig from './getConfig';
+import { removeRootPath } from './utils';
 
 export type HandlePullRequestRunParams = {
   run: SarifRun;
@@ -18,21 +19,6 @@ type HandleCreateReviewParams = {
   tmpComments: Comments;
   filesWithViolationsInPr: string[];
 };
-
-/**
- * Handle removing the root when a user supplies a path
- *
- * @function removeRootPath
- * @param {string} uri - File location URI
- * @returns {string}
- */
-export function removeRootPath(uri: string): string {
-  const { path } = getConfig();
-  if (uri.startsWith(path)) {
-    return uri.slice(path.length);
-  }
-  return uri;
-}
 
 /**
  * Handle the creation of a review on a pull request.

@@ -31223,26 +31223,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.handlePullRequestRun = exports.handleCreateReview = exports.removeRootPath = void 0;
+exports.handlePullRequestRun = exports.handleCreateReview = void 0;
 const github_1 = __nccwpck_require__(5438);
 const stringEnums_1 = __nccwpck_require__(4916);
 const debugLog_1 = __importDefault(__nccwpck_require__(498));
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
-/**
- * Handle removing the root when a user supplies a path
- *
- * @function removeRootPath
- * @param {string} uri - File location URI
- * @returns {string}
- */
-function removeRootPath(uri) {
-    const { path } = (0, getConfig_1.default)();
-    if (uri.startsWith(path)) {
-        return uri.slice(path.length);
-    }
-    return uri;
-}
-exports.removeRootPath = removeRootPath;
+const utils_1 = __nccwpck_require__(1314);
 /**
  * Handle the creation of a review on a pull request.
  *
@@ -31309,7 +31295,7 @@ async function handlePullRequestRun({ run }) {
         // If the user supplies a path, we need to remove it for the diff.
         // Github is unaware of the repo being nested if path is supplied
         // to the checkout action and the contents are placed in that directory.
-        const path = root.length ? removeRootPath(location) : location;
+        const path = root.length ? (0, utils_1.removeRootPath)(location) : location;
         return {
             body: result.message.text,
             path,
@@ -31405,6 +31391,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.handleValidate = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const cfn_guard_1 = __nccwpck_require__(7848);
+const utils_1 = __nccwpck_require__(1314);
 const debugLog_1 = __importDefault(__nccwpck_require__(498));
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 /**
@@ -31412,12 +31399,12 @@ const getConfig_1 = __importDefault(__nccwpck_require__(5677));
  * @returns {Promise<SarifReport>} - The SARIF report containing the validation results.
  */
 async function handleValidate() {
-    const { rulesPath, dataPath } = (0, getConfig_1.default)();
+    const { rulesPath, dataPath, path } = (0, getConfig_1.default)();
     (0, debugLog_1.default)(`Rules path sent to validation: ${rulesPath}`);
     (0, debugLog_1.default)(`Data path sent to validation: ${dataPath}`);
     const result = await (0, cfn_guard_1.validate)({
-        dataPath,
-        rulesPath
+        dataPath: path.length ? (0, utils_1.addRootPath)(dataPath) : dataPath,
+        rulesPath: path.length ? (0, utils_1.addRootPath)(rulesPath) : rulesPath
     });
     (0, debugLog_1.default)(`Validation result: ${JSON.stringify(result, null, 2)}`);
     core.setOutput('result', JSON.stringify(result, null, 2));
@@ -31653,6 +31640,54 @@ async function uploadCodeScan({ result }) {
     await octokit.request(ENDPOINT, params);
 }
 exports.uploadCodeScan = uploadCodeScan;
+
+
+/***/ }),
+
+/***/ 1314:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.removeRootPath = exports.addRootPath = void 0;
+const getConfig_1 = __importDefault(__nccwpck_require__(5677));
+/**
+ * Handle adding the root when a user supplies a path
+ *
+ * @function removeRootPath
+ * @param {string} path - A file path
+ * @returns {string}
+ */
+function addRootPath(path) {
+    const { path: root } = (0, getConfig_1.default)();
+    if (path.startsWith('./')) {
+        return `${root}${path.slice(1)}`;
+    }
+    else if (!path.startsWith(root)) {
+        return `${root}/${path}`;
+    }
+    return path;
+}
+exports.addRootPath = addRootPath;
+/**
+ * Handle removing the root when a user supplies a path
+ *
+ * @function removeRootPath
+ * @param {string} uri - File location URI
+ * @returns {string}
+ */
+function removeRootPath(uri) {
+    const { path } = (0, getConfig_1.default)();
+    if (uri.startsWith(path)) {
+        return uri.slice(path.length);
+    }
+    return uri;
+}
+exports.removeRootPath = removeRootPath;
 
 
 /***/ }),
