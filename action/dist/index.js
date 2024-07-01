@@ -31292,7 +31292,7 @@ async function handlePullRequestRun({ run }) {
     (0, debugLog_1.default)(`Files changed: ${JSON.stringify(filesChanged, null, 2)}`);
     const tmpComments = run.results.map(result => {
         const uri = result.locations[0].physicalLocation.artifactLocation.uri;
-        const path = root.length ? (0, utils_1.removeRootPath)(uri) : uri;
+        const path = root?.length ? (0, utils_1.removeRootPath)(uri) : uri;
         return {
             body: result.message.text,
             path,
@@ -31312,7 +31312,7 @@ async function handlePullRequestRun({ run }) {
     return run.results
         .map(({ locations: [location], ruleId, message: { text } }) => {
         const uri = location.physicalLocation.artifactLocation.uri;
-        return filesWithViolationsInPr.includes(root.length ? (0, utils_1.removeRootPath)(uri) : uri)
+        return filesWithViolationsInPr.includes(root?.length ? (0, utils_1.removeRootPath)(uri) : uri)
             ? [
                 `❌ ${uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
                 text,
