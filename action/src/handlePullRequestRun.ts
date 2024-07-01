@@ -20,6 +20,21 @@ type HandleCreateReviewParams = {
 };
 
 /**
+ * Handle removing the root when a user supplies a path
+ *
+ * @function removeRootPath
+ * @param {string} uri - File location URI
+ * @returns {string}
+ */
+export function removeRootPath(uri: string): string {
+  const { path } = getConfig();
+  if (uri.startsWith(path)) {
+    return uri.slice(path.length);
+  }
+  return uri;
+}
+
+/**
  * Handle the creation of a review on a pull request.
  *
  * @async
@@ -78,7 +93,7 @@ export async function handlePullRequestRun({
   debugLog(`Handling PR run...`);
 
   const MAX_PER_PAGE = 3000;
-  const { token, createReview } = getConfig();
+  const { token, createReview, path: root } = getConfig();
   const octokit = getOctokit(token);
   const { pull_request } = context.payload;
 
@@ -91,16 +106,23 @@ export async function handlePullRequestRun({
     per_page: MAX_PER_PAGE,
     pull_number: pull_request.number
   });
-  console.error(listFiles);
+
   const filesChanged = listFiles.data.map(({ filename }) => filename);
 
   debugLog(`Files changed: ${JSON.stringify(filesChanged, null, 2)}`);
 
-  const tmpComments = run.results.map(result => ({
-    body: result.message.text,
-    path: result.locations[0].physicalLocation.artifactLocation.uri,
-    position: result.locations[0].physicalLocation.region.startLine
-  }));
+  const tmpComments = run.results.map(result => {
+    const location = result.locations[0].physicalLocation.artifactLocation.uri;
+    // If the user supplies a path, we need to remove it for the diff.
+    // Github is unaware of the repo being nested if path is supplied
+    // to the checkout action and the contents are placed in that directory.
+    const path = root.length ? removeRootPath(location) : location;
+    return {
+      body: result.message.text,
+      path,
+      position: result.locations[0].physicalLocation.region.startLine
+    };
+  });
 
   const filesWithViolations = tmpComments.map(({ path }) => path);
 

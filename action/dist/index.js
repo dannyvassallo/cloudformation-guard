@@ -31223,11 +31223,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.handlePullRequestRun = exports.handleCreateReview = void 0;
+exports.handlePullRequestRun = exports.handleCreateReview = exports.removeRootPath = void 0;
 const github_1 = __nccwpck_require__(5438);
 const stringEnums_1 = __nccwpck_require__(4916);
 const debugLog_1 = __importDefault(__nccwpck_require__(498));
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
+/**
+ * Handle removing the root when a user supplies a path
+ *
+ * @function removeRootPath
+ * @param {string} uri - File location URI
+ * @returns {string}
+ */
+function removeRootPath(uri) {
+    const { path } = (0, getConfig_1.default)();
+    if (uri.startsWith(path)) {
+        return uri.slice(path.length);
+    }
+    return uri;
+}
+exports.removeRootPath = removeRootPath;
 /**
  * Handle the creation of a review on a pull request.
  *
@@ -31276,7 +31291,7 @@ exports.handleCreateReview = handleCreateReview;
 async function handlePullRequestRun({ run }) {
     (0, debugLog_1.default)(`Handling PR run...`);
     const MAX_PER_PAGE = 3000;
-    const { token, createReview } = (0, getConfig_1.default)();
+    const { token, createReview, path: root } = (0, getConfig_1.default)();
     const octokit = (0, github_1.getOctokit)(token);
     const { pull_request } = github_1.context.payload;
     if (!pull_request) {
@@ -31287,14 +31302,20 @@ async function handlePullRequestRun({ run }) {
         per_page: MAX_PER_PAGE,
         pull_number: pull_request.number
     });
-    console.error(listFiles);
     const filesChanged = listFiles.data.map(({ filename }) => filename);
     (0, debugLog_1.default)(`Files changed: ${JSON.stringify(filesChanged, null, 2)}`);
-    const tmpComments = run.results.map(result => ({
-        body: result.message.text,
-        path: result.locations[0].physicalLocation.artifactLocation.uri,
-        position: result.locations[0].physicalLocation.region.startLine
-    }));
+    const tmpComments = run.results.map(result => {
+        const location = result.locations[0].physicalLocation.artifactLocation.uri;
+        // If the user supplies a path, we need to remove it for the diff.
+        // Github is unaware of the repo being nested if path is supplied
+        // to the checkout action and the contents are placed in that directory.
+        const path = root.length ? removeRootPath(location) : location;
+        return {
+            body: result.message.text,
+            path,
+            position: result.locations[0].physicalLocation.region.startLine
+        };
+    });
     const filesWithViolations = tmpComments.map(({ path }) => path);
     const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
     (0, debugLog_1.default)(`Files with violations in PR: ${JSON.stringify(filesWithViolationsInPr, null, 2)}`);
@@ -31506,7 +31527,6 @@ const stringEnums_1 = __nccwpck_require__(4916);
 const checkoutRepository_1 = __nccwpck_require__(9274);
 const github_1 = __nccwpck_require__(5438);
 const debugLog_1 = __nccwpck_require__(498);
-const exec_1 = __nccwpck_require__(1514);
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 const handlePullRequestRun_1 = __nccwpck_require__(4879);
 const handlePushRun_1 = __nccwpck_require__(5802);
@@ -31519,28 +31539,11 @@ const uploadCodeScan_1 = __nccwpck_require__(1806);
  */
 async function run() {
     (0, debugLog_1.debugLog)(`Running action`);
-    const { analyze, checkout, path } = (0, getConfig_1.default)();
+    const { analyze, checkout } = (0, getConfig_1.default)();
     const { eventName } = github_1.context;
     (0, debugLog_1.debugLog)(`Event type: ${eventName}`);
     if (checkout) {
         await (0, checkoutRepository_1.checkoutRepository)();
-    }
-    if (path.length) {
-        try {
-            await (0, exec_1.exec)(`/bin/bash -c "cd ${path}"`);
-            await (0, exec_1.exec)(`/bin/bash -c "pwd"`);
-            await (0, exec_1.exec)(`/bin/bash -c "ls"`);
-        }
-        catch {
-            try {
-                await (0, exec_1.exec)(`cmd /c "cd ${path}"`);
-                await (0, exec_1.exec)(`cmd /c "pwd"`);
-                await (0, exec_1.exec)(`cmd /c "dir"`);
-            }
-            catch {
-                core.setFailed(stringEnums_1.ErrorStrings.PATH_ERROR);
-            }
-        }
     }
     try {
         const result = await (0, handleValidate_1.handleValidate)();

@@ -3,7 +3,6 @@ import { ErrorStrings, GithubEventNames } from './stringEnums';
 import { checkoutRepository } from './checkoutRepository';
 import { context } from '@actions/github';
 import { debugLog } from './debugLog';
-import { exec } from '@actions/exec';
 import getConfig from './getConfig';
 import { handlePullRequestRun } from './handlePullRequestRun';
 import { handlePushRun } from './handlePushRun';
@@ -17,27 +16,13 @@ import { uploadCodeScan } from './uploadCodeScan';
  */
 export async function run(): Promise<void> {
   debugLog(`Running action`);
-  const { analyze, checkout, path } = getConfig();
+  const { analyze, checkout } = getConfig();
   const { eventName } = context;
   debugLog(`Event type: ${eventName}`);
   if (checkout) {
     await checkoutRepository();
   }
-  if (path.length) {
-    try {
-      await exec(`/bin/bash -c "cd ${path}"`);
-      await exec(`/bin/bash -c "pwd"`);
-      await exec(`/bin/bash -c "ls"`);
-    } catch {
-      try {
-        await exec(`cmd /c "cd ${path}"`);
-        await exec(`cmd /c "pwd"`);
-        await exec(`cmd /c "dir"`);
-      } catch {
-        core.setFailed(ErrorStrings.PATH_ERROR);
-      }
-    }
-  }
+
   try {
     const result = await handleValidate();
     const {
