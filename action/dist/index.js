@@ -31291,11 +31291,8 @@ async function handlePullRequestRun({ run }) {
     const filesChanged = listFiles.data.map(({ filename }) => filename);
     (0, debugLog_1.default)(`Files changed: ${JSON.stringify(filesChanged, null, 2)}`);
     const tmpComments = run.results.map(result => {
-        const location = result.locations[0].physicalLocation.artifactLocation.uri;
-        // If the user supplies a path, we need to remove it for the diff.
-        // Github is unaware of the repo being nested if path is supplied
-        // to the checkout action and the contents are placed in that directory.
-        const path = root.length ? (0, utils_1.removeRootPath)(location) : location;
+        const uri = result.locations[0].physicalLocation.artifactLocation.uri;
+        const path = root.length ? (0, utils_1.removeRootPath)(uri) : uri;
         return {
             body: result.message.text,
             path,
@@ -31312,13 +31309,16 @@ async function handlePullRequestRun({ run }) {
             tmpComments
         }));
     return run.results
-        .map(({ locations: [location], ruleId, message: { text } }) => filesWithViolationsInPr.includes(location.physicalLocation.artifactLocation.uri)
-        ? [
-            `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
-            text,
-            ruleId
-        ]
-        : [])
+        .map(({ locations: [location], ruleId, message: { text } }) => {
+        const uri = location.physicalLocation.artifactLocation.uri;
+        return filesWithViolationsInPr.includes(root.length ? (0, utils_1.removeRootPath)(uri) : uri)
+            ? [
+                `❌ ${uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
+                text,
+                ruleId
+            ]
+            : [];
+    })
         .filter(result => result.some(Boolean));
 }
 exports.handlePullRequestRun = handlePullRequestRun;
