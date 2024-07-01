@@ -31300,6 +31300,7 @@ async function handlePullRequestRun({ run }) {
         };
     });
     const filesWithViolations = tmpComments.map(({ path }) => path);
+    (0, debugLog_1.default)(`Files with violations: ${JSON.stringify(filesWithViolations, null, 2)}`);
     const filesWithViolationsInPr = filesChanged.filter(value => filesWithViolations.includes(value));
     (0, debugLog_1.default)(`Files with violations in PR: ${JSON.stringify(filesWithViolationsInPr, null, 2)}`);
     filesWithViolationsInPr.length &&
