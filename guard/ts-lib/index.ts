@@ -85,22 +85,29 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
   const dataPattern = /DATA_STDIN\[(\d+)\]/g;
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
 
-  const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
-    const fileIndex = parseInt(index, 10) - 1;
-    const fileName = dataNames[fileIndex];
-    return fileName ? fileName.replace(/^\//, '') : match;
-  }).replace(rulesPattern, (match: string, index: string) => {
-    const ruleIndex = parseInt(index, 10) - 1;
-    const ruleName = rulesNames[ruleIndex];
-    if (ruleName) {
-      const fileNameWithoutExtension = path.basename(ruleName, path.extname(ruleName));
-      return fileNameWithoutExtension.toUpperCase();
+  const modifiedResult = JSON.parse(JSON.stringify(result, (key, value) => {
+    if (typeof value === 'string') {
+      return value
+        .replace(dataPattern, (match: string, index: string) => {
+          const fileIndex = parseInt(index, 10) - 1;
+          const fileName = dataNames[fileIndex];
+          return fileName ? fileName.replace(/^\//, '') : match;
+        })
+        .replace(rulesPattern, (match: string, index: string) => {
+          const ruleIndex = parseInt(index, 10) - 1;
+          const ruleName = rulesNames[ruleIndex];
+          if (ruleName) {
+            const fileNameWithoutExtension = path.basename(ruleName, path.extname(ruleName));
+            return fileNameWithoutExtension.toUpperCase();
+          }
+          return match;
+        });
     }
-    return match;
+    return value;
   }));
 
-  return JSON.parse(output);
-}
+  return modifiedResult;
+};
 
   async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {
     const fileNames: string[] = [];
