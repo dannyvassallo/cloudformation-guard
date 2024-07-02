@@ -30931,7 +30931,7 @@ const debugLog_1 = __importDefault(__nccwpck_require__(498));
  * @returns {Promise<string>} - The base64-encoded string.
  */
 async function blobToBase64(blob) {
-    (0, debugLog_1.default)(`Encoding results...`);
+    (0, debugLog_1.default)('Encoding results...');
     const reader = new stream_1.Readable();
     reader._read = () => { }; // _read is required but you can noop it
     reader.push(blob);
@@ -30970,7 +30970,7 @@ const exec_1 = __nccwpck_require__(1514);
  * @returns {Promise<void>}
  */
 async function checkoutPrivateRepository() {
-    (0, debugLog_1.default)(`Checking out private repo`);
+    (0, debugLog_1.default)('Checking out private repo');
     const sha = github_1.context.sha;
     const repository = github_1.context.payload.repository?.full_name;
     try {
@@ -31011,7 +31011,7 @@ const exec_1 = __nccwpck_require__(1514);
  * @returns {Promise<void>}
  */
 async function checkoutPublicRepository() {
-    (0, debugLog_1.debugLog)(`Checking out public repo`);
+    (0, debugLog_1.debugLog)('Checking out public repo');
     const ref = github_1.context.payload.ref ?? github_1.context.ref;
     const repository = github_1.context.payload.repository?.full_name;
     try {
@@ -31059,7 +31059,7 @@ const getConfig_1 = __importDefault(__nccwpck_require__(5677));
  * @returns {Promise<void>}
  */
 async function checkoutRepository() {
-    (0, debugLog_1.default)(`Checking out repo`);
+    (0, debugLog_1.default)('Checking out repo');
     const { token } = (0, getConfig_1.default)();
     const repository = github_1.context.payload.repository?.full_name;
     if (!repository) {
@@ -31108,7 +31108,7 @@ const zlib_1 = __importDefault(__nccwpck_require__(9796));
  * @returns {Promise<string>} - The compressed and base64-encoded string.
  */
 async function compressAndEncode(input) {
-    (0, debugLog_1.default)(`Compressing results...`);
+    (0, debugLog_1.default)('Compressing results...');
     const byteArray = Buffer.from(input, 'utf8');
     const gzip = zlib_1.default.createGzip();
     const compressedData = await new Promise((resolve, reject) => {
@@ -31275,7 +31275,7 @@ exports.handleCreateReview = handleCreateReview;
  * @throws {Error} - Throws an error if the pull request context cannot be found.
  */
 async function handlePullRequestRun({ run }) {
-    (0, debugLog_1.default)(`Handling PR run...`);
+    (0, debugLog_1.default)('Handling PR run...');
     const MAX_PER_PAGE = 3000;
     const { token, createReview, path: root } = (0, getConfig_1.default)();
     const octokit = (0, github_1.getOctokit)(token);
@@ -31345,7 +31345,7 @@ const debugLog_1 = __importDefault(__nccwpck_require__(498));
  * @returns {Promise<string[][]>} - An array of arrays, where each inner array represents a violation with the following format: [file path, violation message, rule ID].
  */
 async function handlePushRun({ run }) {
-    (0, debugLog_1.default)(`Handling push run...`);
+    (0, debugLog_1.default)('Handling push run...');
     return run.results.map(({ locations: [location], ruleId, message: { text } }) => [
         `❌ ${location.physicalLocation.artifactLocation.uri}:L${location.physicalLocation.region.startLine},C${location.physicalLocation.region.startColumn}`,
         text,
@@ -31459,7 +31459,7 @@ const debugLog_1 = __importDefault(__nccwpck_require__(498));
  * @returns {Promise<void>} - Resolves when the action summary has been written.
  */
 async function handleWriteActionSummary({ results }) {
-    (0, debugLog_1.default)(`Writing summary...`);
+    (0, debugLog_1.default)('Writing summary...');
     await core.summary
         .addHeading(stringEnums_1.SummaryStrings.HEADING)
         .addTable([
@@ -31526,7 +31526,7 @@ const uploadCodeScan_1 = __nccwpck_require__(1806);
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
-    (0, debugLog_1.debugLog)(`Running action`);
+    (0, debugLog_1.debugLog)('Running action');
     const { analyze, checkout } = (0, getConfig_1.default)();
     const { eventName } = github_1.context;
     (0, debugLog_1.debugLog)(`Event type: ${eventName}`);
@@ -31538,7 +31538,7 @@ async function run() {
         const { runs: [sarifRun] } = result;
         if (sarifRun.results.length) {
             if (analyze) {
-                (0, debugLog_1.debugLog)(`Using analyze`);
+                (0, debugLog_1.debugLog)('Using analyze');
                 core.setFailed(`${stringEnums_1.ErrorStrings.VALIDATION_FAILURE} ${stringEnums_1.ErrorStrings.SECURITY_TAB}`);
                 await (0, uploadCodeScan_1.uploadCodeScan)({ result });
             }
@@ -31621,7 +31621,7 @@ const getConfig_1 = __importDefault(__nccwpck_require__(5677));
  * @returns {Promise<void>} - Resolves when the code scan has been uploaded successfully.
  */
 async function uploadCodeScan({ result }) {
-    (0, debugLog_1.default)(`Uploading results...`);
+    (0, debugLog_1.default)('Uploading results...');
     const ENDPOINT = 'POST /repos/{owner}/{repo}/code-scanning/sarifs';
     const { token } = (0, getConfig_1.default)();
     const { payload: { ref, head_commit }, ref: contextRef, sha } = github_1.context;

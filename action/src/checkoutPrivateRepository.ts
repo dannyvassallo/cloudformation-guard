@@ -8,7 +8,7 @@ import { exec } from '@actions/exec';
  * @returns {Promise<void>}
  */
 export async function checkoutPrivateRepository(): Promise<void> {
-  debugLog(`Checking out private repo`);
+  debugLog('Checking out private repo');
   const sha = context.sha;
   const repository = context.payload.repository?.full_name;
 

@@ -7,7 +7,7 @@ import debugLog from './debugLog';
  * @returns {Promise<string>} - The base64-encoded string.
  */
 export async function blobToBase64(blob: Buffer): Promise<string> {
-  debugLog(`Encoding results...`);
+  debugLog('Encoding results...');
 
   const reader = new Readable();
   reader._read = () => {}; // _read is required but you can noop it

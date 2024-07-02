@@ -76,7 +76,7 @@ export async function handleCreateReview({
 export async function handlePullRequestRun({
   run
 }: HandlePullRequestRunParams): Promise<string[][]> {
-  debugLog(`Handling PR run...`);
+  debugLog('Handling PR run...');
 
   const MAX_PER_PAGE = 3000;
   const { token, createReview, path: root } = getConfig();

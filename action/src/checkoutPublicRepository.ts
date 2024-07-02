@@ -7,7 +7,7 @@ import { exec } from '@actions/exec';
  * @returns {Promise<void>}
  */
 export async function checkoutPublicRepository(): Promise<void> {
-  debugLog(`Checking out public repo`);
+  debugLog('Checking out public repo');
   const ref = context.payload.ref ?? context.ref;
   const repository = context.payload.repository?.full_name;
   try {

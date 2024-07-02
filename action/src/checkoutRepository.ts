@@ -10,7 +10,7 @@ import getConfig from './getConfig';
  * @returns {Promise<void>}
  */
 export async function checkoutRepository(): Promise<void> {
-  debugLog(`Checking out repo`);
+  debugLog('Checking out repo');
   const { token } = getConfig();
   const repository = context.payload.repository?.full_name;
 

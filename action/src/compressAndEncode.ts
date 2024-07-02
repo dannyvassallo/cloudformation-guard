@@ -7,7 +7,7 @@ import zlib from 'zlib';
  * @returns {Promise<string>} - The compressed and base64-encoded string.
  */
 export async function compressAndEncode(input: string): Promise<string> {
-  debugLog(`Compressing results...`);
+  debugLog('Compressing results...');
 
   const byteArray = Buffer.from(input, 'utf8');
   const gzip = zlib.createGzip();

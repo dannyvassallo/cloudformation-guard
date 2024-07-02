@@ -15,7 +15,7 @@ type HandleWriteActionSummaryParams = {
 export async function handleWriteActionSummary({
   results
 }: HandleWriteActionSummaryParams): Promise<void> {
-  debugLog(`Writing summary...`);
+  debugLog('Writing summary...');
 
   await core.summary
     .addHeading(SummaryStrings.HEADING)

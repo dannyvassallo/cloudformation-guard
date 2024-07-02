@@ -15,7 +15,7 @@ import { uploadCodeScan } from './uploadCodeScan';
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
-  debugLog(`Running action`);
+  debugLog('Running action');
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
   debugLog(`Event type: ${eventName}`);
@@ -30,7 +30,7 @@ export async function run(): Promise<void> {
     } = result;
     if (sarifRun.results.length) {
       if (analyze) {
-        debugLog(`Using analyze`);
+        debugLog('Using analyze');
         core.setFailed(
           `${ErrorStrings.VALIDATION_FAILURE} ${ErrorStrings.SECURITY_TAB}`
         );

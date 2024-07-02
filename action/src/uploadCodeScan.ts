@@ -16,7 +16,7 @@ export type UploadCodeScanParams = {
 export async function uploadCodeScan({
   result
 }: UploadCodeScanParams): Promise<void> {
-  debugLog(`Uploading results...`);
+  debugLog('Uploading results...');
   const ENDPOINT = 'POST /repos/{owner}/{repo}/code-scanning/sarifs';
   const { token } = getConfig();
   const {
