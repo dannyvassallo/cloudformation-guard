@@ -14,10 +14,6 @@ from pathlib import Path
 from typing import Sequence, Union
 from urllib.request import Request, urlopen
 
-# pylint: disable=C0301
-LATEST_RELEASE_URL = (
-    "https://api.github.com/repos/aws-cloudformation/cloudformation-guard/releases/latest"
-)
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
 
@@ -66,14 +62,20 @@ def request(url: str):
     return Request(url, headers={"User-Agent": "Mozilla/5.0"})
 
 
-def get_latest_tag() -> str:
-    """Get the latest release tag from Github"""
+def get_release_tag() -> str:
+    """Get the tag from Cargo.toml"""
 
-    req = request(LATEST_RELEASE_URL)
+    with open("../guard/Cargo.toml", "r") as f:
+        lines = f.readlines()
 
-    with urlopen(req) as response:
-        data = response.read().decode("utf-8")
-        return json.loads(data)["tag_name"]
+    for line in lines:
+        if line.startswith("version = "):
+            version = line.split(" = ")[1].strip('"')
+            break
+    version_string = f"v{version}"
+    print(f"Using cfn-guard version {version_string}")
+
+    return version_string
 
 
 def get_binary_name() -> str:
@@ -84,15 +86,15 @@ def get_binary_name() -> str:
 
 def install_cfn_guard():
     """
-    Install the latest cfn-guard to the install_dir to avoid
+    Install the cfn-guard to the install_dir to avoid
     global version conflicts with existing installations, rust,
     and cargo.
     """
-    latest_tag = get_latest_tag()
+    release_tag = get_release_tag()
     binary_name = get_binary_name()
 
     if current_os in supported_oses:
-        url = release_urls_dict[current_os].replace("TAG", latest_tag)
+        url = release_urls_dict[current_os].replace("TAG", release_tag)
         # Download tarball of release from Github
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             with urlopen(url) as response:
