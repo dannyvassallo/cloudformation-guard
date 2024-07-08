@@ -138,12 +138,14 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*', help='Files to validate')
-    parser.add_argument('--rules', action='append', help='rules files', required=True)
+    parser.add_argument('--rules', action='append', help='Rules file/directory', required=True)
 
     args = parser.parse_args(argv)
-    print(args)
 
     exit_code = 0
+
+    if not args.filenames.length:
+        return exit_code
 
     for filename in args.filenames:
         validate_cmd = f"validate --rules={args.rules[0]} --data={filename}"
