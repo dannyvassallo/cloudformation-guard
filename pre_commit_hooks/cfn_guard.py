@@ -149,10 +149,10 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     exit_code = 0
 
     for filename in args.filenames:
-        cmd = if args.validate:
-            f"validate --rules={args.rules[0]} --data={filename}"
+        if args.validate:
+            cmd = f"validate --rules={args.rules[0]} --data={filename}"
         elif args.test:
-            f"test --rules={args.rules[0]} --test-data={filename}"
+            cmd = f"test --rules={args.rules[0]} --test-data={filename}"
         else:
             raise CfnGuardPreCommitError(UNKNOWN_OPERATION_MSG)
 
