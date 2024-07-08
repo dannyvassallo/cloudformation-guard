@@ -2,7 +2,6 @@
 This module contains the logic for the cfn-guard pre-commit hook
 """
 
-import shlex
 import json
 import os
 import platform
@@ -139,16 +138,12 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*', help='Files to validate')
-    parser.add_argument('--rules', action='append', help='rules files')
+    parser.add_argument('--rules', action='append', help='rules files', required=True)
 
     args = parser.parse_args(argv)
     print(args)
 
-    # Split the 'rules' argument into separate arguments
-    rules_args = shlex.split(args.rules[0]) if args.rules else []
-
-    print(f"Filenames: {args.filenames}")
-    print(f"Rules args: {rules_args}")
+    validate_cmd = f"validate --rules={rules} --data{','.join(args.filenames)}"
 
 
 # Handle invocation from python directly
