@@ -146,7 +146,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     exit_code = 0
 
     for filename in args.filenames:
-        validate_cmd = f"validate --rules={args.rules} --data={filename}"
+        validate_cmd = f"validate --rules={args.rules[0]} --data={filename}"
         print(validate_cmd)
         result = run_cfn_guard(validate_cmd)
         if result != 0:
