@@ -121,7 +121,7 @@ def run_cfn_guard(args: str) -> int:
         cmd = f"{binary_path} {args}"
 
         try:
-            result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
+            result = subprocess.run(cmd, cwd=project_root, shell=True, check=True)
             return result.returncode
         except subprocess.CalledProcessError as e:
             return e.returncode
@@ -145,7 +145,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     validate_cmd = f"validate --rules={args.rules} --data{','.join(args.filenames)}"
 
-
+    run_cfn_guard(validate_cmd)
 # Handle invocation from python directly
 if __name__ == "__main__":
     raise SystemExit(main())
