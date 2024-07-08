@@ -147,8 +147,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     args = parser.parse_args(argv)
 
     exit_code = 0
-    print(args)
-    print(args.operation)
+
     for filename in args.filenames:
         if args.operation[0] == 'validate':
             cmd = f"validate --rules={args.rules[0]} --data={filename}"
