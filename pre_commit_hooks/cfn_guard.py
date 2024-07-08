@@ -10,12 +10,14 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import argparse
 from pathlib import Path
 from typing import Sequence, Union
 from urllib.request import Request, urlopen
 
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
+GUARD_BINARY_VERSION = "3.1.1"
 
 release_urls_dict = {
     # pylint: disable=C0301
@@ -61,23 +63,6 @@ def request(url: str):
     # https://docs.python.org/3/howto/urllib2.html#headers
     return Request(url, headers={"User-Agent": "Mozilla/5.0"})
 
-
-def get_release_tag() -> str:
-    """Get the tag from Cargo.toml"""
-
-    with open("../guard/Cargo.toml", "r") as f:
-        lines = f.readlines()
-
-    for line in lines:
-        if line.startswith("version = "):
-            version = line.split(" = ")[1].strip('"')
-            break
-    version_string = f"v{version}"
-    print(f"Using cfn-guard version {version_string}")
-
-    return version_string
-
-
 def get_binary_name() -> str:
     """Get an OS specific binary name"""
 
@@ -90,11 +75,10 @@ def install_cfn_guard():
     global version conflicts with existing installations, rust,
     and cargo.
     """
-    release_tag = get_release_tag()
     binary_name = get_binary_name()
 
     if current_os in supported_oses:
-        url = release_urls_dict[current_os].replace("TAG", release_tag)
+        url = release_urls_dict[current_os].replace("TAG", GUARD_BINARY_VERSION)
         # Download tarball of release from Github
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             with urlopen(url) as response:
@@ -126,7 +110,7 @@ def install_cfn_guard():
         raise CfnGuardPreCommitError(f"{UNSUPPORTED_OS_MSG}: {current_os}", code=1)
 
 
-def run_cfn_guard(args: Sequence[str]) -> int:
+def run_cfn_guard(args: str) -> int:
     """Pass arguments to and run cfn-guard"""
 
     binary_name = get_binary_name()
@@ -134,7 +118,7 @@ def run_cfn_guard(args: Sequence[str]) -> int:
 
     if os.path.exists(binary_path):
         project_root: str = os.getcwd()
-        cmd = [binary_path] + list(args)
+        cmd = f"{binary_path} {args}"
 
         try:
             result = subprocess.run(" ".join(cmd), cwd=project_root, shell=True, check=True)
@@ -150,13 +134,22 @@ def run_cfn_guard(args: Sequence[str]) -> int:
 def main(argv: Union[Sequence[str], None] = None) -> int:
     """Entry point for the pre-commit hook"""
 
-    # This only serves to chop the first arg (the filename) when running the script directly
-    if argv is None:
-        argv = sys.argv[1:]
-
-    return run_cfn_guard(argv)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('filenames', nargs='+', help='Files to validate')
+    # parser.add_argument(
+    #     '--rules',
+    #     action='store_const',
+    #     help='rules files',
+    #     const='rules'
+    # )
+    print(argv)
+    # args = parser.parse_args(argv)
+    # print(args)
+    # validation_command = f"validate --data='{",".join(argv)}' --rules='{argv}'"
+    # print(f"Running cfn-guard with command: {validation_command}")
+    # run_cfn_guard(validation_command)
 
 
 # Handle invocation from python directly
-if __name__ == "__main__":
-    raise SystemExit(main())
+# if __name__ == "__main__":
+#     raise SystemExit(main())
