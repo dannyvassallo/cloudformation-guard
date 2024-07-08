@@ -1,8 +1,9 @@
 # TODO: Update this to use the release from CFN once merged
 repos:
 -   repo: https://github.com/dannyvassallo/cloudformation-guard
-    rev: pre-commit-v0.0.79
+    rev: pre-commit-v0.0.81
     hooks:
         -   id: cfn-guard
             args:
                 - "--rules=./guard/resources/validate/rules-dir/"
+            files: ^guard/resources/validate/data-dir/.*
