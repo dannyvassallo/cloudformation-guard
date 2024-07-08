@@ -144,7 +144,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     exit_code = 0
 
-    if not args.filenames.length:
+    if not args.filenames.len():
         return exit_code
 
     for filename in args.filenames:
