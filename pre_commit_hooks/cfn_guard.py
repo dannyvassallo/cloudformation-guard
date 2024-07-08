@@ -17,6 +17,8 @@ from urllib.request import Request, urlopen
 
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
+UNKNOWN_OPERATION_MSG = "Unknown operation. cfn-guard pre-commit-hook only supports validate and test commands."
+# Hardcode this so the pre-commit-hook rev is tied to a specific version
 GUARD_BINARY_VERSION = "3.1.1"
 
 release_urls_dict = {
@@ -138,6 +140,8 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*', help='Files to validate')
+    parser.add_argument('test', action='test', help='cfn-guard test command')
+    parser.add_argument('validate', action='test', help='cfn-guard validate command')
     parser.add_argument('--rules', action='append', help='Rules file/directory', required=True)
 
     args = parser.parse_args(argv)
@@ -145,9 +149,14 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     exit_code = 0
 
     for filename in args.filenames:
-        validate_cmd = f"validate --rules={args.rules[0]} --data={filename}"
-        print(validate_cmd)
-        result = run_cfn_guard(validate_cmd)
+        if args.validate:
+            cmd = f"validate --rules={args.rules[0]} --data={filename}"
+        elif args.test:
+            cmd = f"test --rules={args.rules[0]} --test-data={filename}"
+        else:
+            raise CfnGuardPreCommitError(UNKNOWN_OPERATION_MSG)
+
+        result = run_cfn_guard(cmd)
         if result != 0:
             exit_code = result
 
