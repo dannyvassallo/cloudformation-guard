@@ -144,9 +144,6 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     exit_code = 0
 
-    if not len(args.filenames):
-        return exit_code
-
     for filename in args.filenames:
         validate_cmd = f"validate --rules={args.rules[0]} --data={filename}"
         print(validate_cmd)
@@ -155,6 +152,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
             exit_code = result
 
     return exit_code
+
 # Handle invocation from python directly
 if __name__ == "__main__":
     raise SystemExit(main())
