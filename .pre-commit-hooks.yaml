@@ -5,5 +5,4 @@
     language: python
     verbose: true
     always_run: true
-    pass_filenames: true
-    files: ^(?!.*\.(json|guard|ya?ml)$).*$
+    pass_filenames: false

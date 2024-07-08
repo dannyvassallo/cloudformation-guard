@@ -2,6 +2,7 @@
 This module contains the logic for the cfn-guard pre-commit hook
 """
 
+import shlex
 import json
 import os
 import platform
@@ -133,23 +134,23 @@ def run_cfn_guard(args: str) -> int:
 
 def main(argv: Union[Sequence[str], None] = None) -> int:
     """Entry point for the pre-commit hook"""
+    if argv is None:
+        argv = sys.argv[1:]
 
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('filenames', nargs='+', help='Files to validate')
-    # parser.add_argument(
-    #     '--rules',
-    #     action='store_const',
-    #     help='rules files',
-    #     const='rules'
-    # )
-    print(argv)
-    # args = parser.parse_args(argv)
-    # print(args)
-    # validation_command = f"validate --data='{",".join(argv)}' --rules='{argv}'"
-    # print(f"Running cfn-guard with command: {validation_command}")
-    # run_cfn_guard(validation_command)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filenames', nargs='*', help='Files to validate')
+    parser.add_argument('--rules', action='append', help='rules files')
+
+    args = parser.parse_args(argv)
+    print(args)
+
+    # Split the 'rules' argument into separate arguments
+    rules_args = shlex.split(args.rules[0]) if args.rules else []
+
+    print(f"Filenames: {args.filenames}")
+    print(f"Rules args: {rules_args}")
 
 
 # Handle invocation from python directly
-# if __name__ == "__main__":
-#     raise SystemExit(main())
+if __name__ == "__main__":
+    raise SystemExit(main())
