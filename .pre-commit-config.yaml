@@ -8,9 +8,3 @@ repos:
                 - validate
                 - "--rules=guard/resources/validate/rules-dir/"
             files: ^guard/resources/validate/data-dir/.*
-            hooks:
-        -   id: cfn-guard
-            args:
-                - test
-                - "--rules=guard/resources/test-command/rule-dir/"
-            files: ^guard/resources/test-command/data-dir/.*

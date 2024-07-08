@@ -140,8 +140,8 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*', help='Files to validate')
-    parser.add_argument('test', action='test', help='cfn-guard test command')
-    parser.add_argument('validate', action='test', help='cfn-guard validate command')
+    parser.add_argument('test', action='append', help='cfn-guard test command')
+    parser.add_argument('validate', action='append', help='cfn-guard validate command')
     parser.add_argument('--rules', action='append', help='Rules file/directory', required=True)
 
     args = parser.parse_args(argv)
@@ -149,10 +149,10 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     exit_code = 0
 
     for filename in args.filenames:
-        if args.validate:
-            cmd = f"validate --rules={args.rules[0]} --data={filename}"
+        cmd = if args.validate:
+            f"validate --rules={args.rules[0]} --data={filename}"
         elif args.test:
-            cmd = f"test --rules={args.rules[0]} --test-data={filename}"
+            f"test --rules={args.rules[0]} --test-data={filename}"
         else:
             raise CfnGuardPreCommitError(UNKNOWN_OPERATION_MSG)
 
