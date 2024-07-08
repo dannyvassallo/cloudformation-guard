@@ -5,5 +5,5 @@ repos:
     hooks:
         -   id: cfn-guard
             args:
-                - "--rules=./guard/resources/validate/rules-dir/"
+                - "--rules=guard/resources/validate/rules-dir/"
             files: ^guard/resources/validate/data-dir/.*
