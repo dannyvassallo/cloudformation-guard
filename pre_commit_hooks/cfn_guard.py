@@ -144,7 +144,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     print(args)
 
     validate_cmd = f"validate --rules={args.rules} --data={','.join(args.filenames)}"
-
+    print(validate_cmd)
     run_cfn_guard(validate_cmd)
 # Handle invocation from python directly
 if __name__ == "__main__":
