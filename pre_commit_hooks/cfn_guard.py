@@ -143,9 +143,16 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     args = parser.parse_args(argv)
     print(args)
 
-    validate_cmd = f"validate --rules={args.rules} --data={','.join(args.filenames)}"
-    print(validate_cmd)
-    run_cfn_guard(validate_cmd)
+    exit_code = 0
+
+    for filename in args.filenames:
+        validate_cmd = f"validate --rules={args.rules} --data={filename)}"
+        print(validate_cmd)
+        result = run_cfn_guard(validate_cmd)
+        if result != 0:
+            exit_code = result
+
+    return exit_code
 # Handle invocation from python directly
 if __name__ == "__main__":
     raise SystemExit(main())
