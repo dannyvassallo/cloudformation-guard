@@ -153,7 +153,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
         if args.operation[0] == 'validate':
             cmd = f"validate --rules={args.rules[0]} --data={filename}"
         elif args.operation[0] == 'test':
-            cmd = f"test --rules-file={filename} --test-data={args.test-data}"
+            cmd = f"test --dir={args.dir[0]}"
         else:
             raise CfnGuardPreCommitError(UNKNOWN_OPERATION_MSG)
 
