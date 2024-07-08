@@ -143,7 +143,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     args = parser.parse_args(argv)
     print(args)
 
-    validate_cmd = f"validate --rules={rules} --data{','.join(args.filenames)}"
+    validate_cmd = f"validate --rules={args['--rules']} --data{','.join(args.filenames)}"
 
 
 # Handle invocation from python directly
