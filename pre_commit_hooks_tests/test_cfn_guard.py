@@ -10,14 +10,14 @@ from pre_commit_hooks.cfn_guard import main
 import os.path
 
 
-def get_resource_path(relative_path):
+def get_guard_resource_path(relative_path):
     return os.path.join(os.path.abspath(__file__ + "/../../")) + "/guard/resources/" + relative_path
 
 
 def test_validate_failing_template():
-    """Test a failing case."""
-    data_dir = get_resource_path("/validate/data-dir/")
-    rules_dir = get_resource_path("/validate/rules-dir/")
+    """Test a failing validate case."""
+    data_dir = get_guard_resource_path("/validate/data-dir/")
+    rules_dir = get_guard_resource_path("/validate/rules-dir/")
     ret = main(
         [
             data_dir,
@@ -29,9 +29,9 @@ def test_validate_failing_template():
 
 
 def test_validate_passing_template():
-    """Test a success case."""
-    rule = get_resource_path("/validate/rules-dir/s3_bucket_public_read_prohibited.guard")
-    data = get_resource_path("/validate/data-dir/s3-public-read-prohibited-template-compliant.yaml")
+    """Test a success validate case."""
+    rule = get_guard_resource_path("/validate/rules-dir/s3_bucket_public_read_prohibited.guard")
+    data = get_guard_resource_path("/validate/data-dir/s3-public-read-prohibited-template-compliant.yaml")
     ret = main(
         [
             data,
@@ -40,3 +40,29 @@ def test_validate_passing_template():
         ]
     )
     assert ret == 0
+
+
+def test_passing_tests():
+    """Test a success test case."""
+    directory = get_guard_resource_path("/validate/rules-dir/s3_bucket_public_read_prohibited.guard")
+    ret = main(
+        [
+            directory,
+            "--operation=test",
+            f"--dir={directory}",
+        ]
+    )
+    assert ret == 0
+
+
+def test_failing_tests():
+    """Test a failing test case."""
+    directory = os.path.join(os.path.abspath(__file__ + "/../")) + "/resources"
+    ret = main(
+        [
+            directory,
+            "--operation=test",
+            f"--dir={directory}",
+        ]
+    )
+    assert ret == 7
