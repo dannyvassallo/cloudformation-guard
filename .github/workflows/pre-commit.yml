@@ -41,6 +41,22 @@ jobs:
             echo "Expected output not found"
             exit 1
           fi
+  test-integ-test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install pre-commit
+      - run: pre-commit install
+      - run: echo >> ./pre_commit_hooks_tests/resources/s3_bucket_logging_enabled.guard
+      - run: git add .
+      - name: Run pre-commit hook
+        run: |
+          output=$(pre-commit run 2>&1 || true)
+          echo $output
+          if ! echo $output | grep -q "exit code: 7"; then
+            echo "Expected output not found"
+            exit 1
+          fi
   validate-integ-test-macos:
     runs-on: macos-latest
     steps:
