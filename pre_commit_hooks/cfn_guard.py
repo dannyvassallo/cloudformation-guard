@@ -2,7 +2,6 @@
 This module contains the logic for the cfn-guard pre-commit hook
 """
 
-import json
 import os
 import platform
 import shutil
@@ -17,7 +16,9 @@ from urllib.request import Request, urlopen
 
 BIN_NAME = "cfn-guard"
 UNSUPPORTED_OS_MSG = "Unsupported operating system. Could not install cfn-guard."
-UNKNOWN_OPERATION_MSG = "Unknown operation. cfn-guard pre-commit-hook only supports validate and test commands."
+UNKNOWN_OPERATION_MSG = (
+    "Unknown operation. cfn-guard pre-commit-hook only supports validate and test commands."
+)
 # Hardcode this so the pre-commit-hook rev is tied to a specific version
 GUARD_BINARY_VERSION = "3.1.1"
 
@@ -64,6 +65,7 @@ def request(url: str):
     # Explicitly set the headers to avoid User-Agent "Python-urllib/x.y"
     # https://docs.python.org/3/howto/urllib2.html#headers
     return Request(url, headers={"User-Agent": "Mozilla/5.0"})
+
 
 def get_binary_name() -> str:
     """Get an OS specific binary name"""
@@ -139,19 +141,19 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('filenames', nargs='*', help='Files to validate')
-    parser.add_argument('--operation', action='append', help='cfn-guard operation', required=True)
-    parser.add_argument('--rules', action='append', help='Rules file/directory')
-    parser.add_argument('--dir', action='append', help='Test & rules directory')
+    parser.add_argument("filenames", nargs="*", help="Files to validate")
+    parser.add_argument("--operation", action="append", help="cfn-guard operation", required=True)
+    parser.add_argument("--rules", action="append", help="Rules file/directory")
+    parser.add_argument("--dir", action="append", help="Test & rules directory")
 
     args = parser.parse_args(argv)
 
     exit_code = 0
 
     for filename in args.filenames:
-        if args.operation[0] == 'validate':
+        if args.operation[0] == "validate":
             cmd = f"validate --rules={args.rules[0]} --data={filename}"
-        elif args.operation[0] == 'test':
+        elif args.operation[0] == "test":
             cmd = f"test --dir={args.dir[0]}"
         else:
             raise CfnGuardPreCommitError(UNKNOWN_OPERATION_MSG)
@@ -161,6 +163,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
             exit_code = result
 
     return exit_code
+
 
 # Handle invocation from python directly
 if __name__ == "__main__":
