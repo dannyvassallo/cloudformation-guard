@@ -25,7 +25,7 @@ jobs:
       - run: ruff check ./pre_commit_hooks_tests/ ./pre_commit_hooks
       - run: mypy ./pre_commit_hooks/ ./pre_commit_hooks_tests/
       - run: black --check .
-  integ-test-linux:
+  validate-integ-test-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
             echo "Expected output not found"
             exit 1
           fi
-  integ-test-macos:
+  validate-integ-test-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
             echo "Expected output not found"
             exit 1
           fi
-  integ-test-windows:
+  validate-integ-test-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4

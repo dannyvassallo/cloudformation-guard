@@ -31,7 +31,9 @@ def test_validate_failing_template():
 def test_validate_passing_template():
     """Test a success validate case."""
     rule = get_guard_resource_path("/validate/rules-dir/s3_bucket_public_read_prohibited.guard")
-    data = get_guard_resource_path("/validate/data-dir/s3-public-read-prohibited-template-compliant.yaml")
+    data = get_guard_resource_path(
+        "/validate/data-dir/s3-public-read-prohibited-template-compliant.yaml"
+    )
     ret = main(
         [
             data,
@@ -44,7 +46,9 @@ def test_validate_passing_template():
 
 def test_passing_tests():
     """Test a success test case."""
-    directory = get_guard_resource_path("/validate/rules-dir/s3_bucket_public_read_prohibited.guard")
+    directory = get_guard_resource_path(
+        "/validate/rules-dir/s3_bucket_public_read_prohibited.guard"
+    )
     ret = main(
         [
             directory,
