@@ -26,6 +26,8 @@ export async function handleValidate(): Promise<SarifReport> {
 
   debugLog(`Validation result: ${JSON.stringify(result, null, 2)}`);
 
+  debugLog(`Validation result: ${JSON.stringify(result, null, 2)}`);
+
   core.setOutput('result', JSON.stringify(result, null, 2));
 
   return result as SarifReport;
