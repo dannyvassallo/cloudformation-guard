@@ -25,7 +25,7 @@ const formatOutput = ({ result, rulesNames, dataNames }) => {
     });
     console.warn({ replacedJson });
     const output = JSON.parse(replacedJson);
-    return output;
+    return JSON.parse(output);
 };
 async function readFiles(dirPath, supportedExtensions) {
     const fileNames = [];

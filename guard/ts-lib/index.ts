@@ -105,7 +105,7 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
 
   const output = JSON.parse(replacedJson);
 
-  return output;
+  return JSON.parse(output);
 };
 
   async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {
