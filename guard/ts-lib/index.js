@@ -9,17 +9,13 @@ const RULE_FILE_SUPPORTED_EXTENSIONS = ['.guard', '.ruleset'];
 const formatOutput = ({ result, rulesNames, dataNames }) => {
     const dataPattern = /DATA_STDIN\[(\d+)\]/g;
     const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
+    // Ensure JSON.stringify does not produce invalid escape sequences
     const escapeForJson = (str) => str.replace(/\\/g, '\\\\');
-    const stringifiedResult = JSON.stringify(result);
-    const replacedDataResult = stringifiedResult.replace(dataPattern, (match, index) => {
+    const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match, index) => {
         const fileIndex = parseInt(index, 10) - 1;
         const fileName = dataNames[fileIndex];
         return fileName ? escapeForJson(fileName.split('/').join('')) : match;
-    });
-    console.warn({
-        replacedDataResult
-    });
-    const replacedRulesResult = replacedDataResult.replace(rulesPattern, (match, index) => {
+    }).replace(rulesPattern, (match, index) => {
         const ruleIndex = parseInt(index, 10) - 1;
         const ruleName = rulesNames[ruleIndex];
         if (ruleName) {
@@ -27,11 +23,7 @@ const formatOutput = ({ result, rulesNames, dataNames }) => {
             return escapeForJson(fileNameWithoutExtension.toUpperCase());
         }
         return match;
-    });
-    console.warn({
-        replacedRulesResult
-    });
-    const output = JSON.parse(replacedDataResult);
+    }));
     return JSON.parse(output);
 };
 async function readFiles(dirPath, supportedExtensions) {

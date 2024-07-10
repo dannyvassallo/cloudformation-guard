@@ -84,22 +84,16 @@ export type SarifShortDescription = {
 const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): SarifReport => {
   const dataPattern = /DATA_STDIN\[(\d+)\]/g;
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
+
+  // Ensure JSON.stringify does not produce invalid escape sequences
   const escapeForJson = (str: string) => str.replace(/\\/g, '\\\\');
 
-  const stringifiedResult = JSON.stringify(result)
-
-  const replacedDataResult = stringifiedResult.replace(dataPattern, (match: string, index: string) => {
+  const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
 
     return fileName ? escapeForJson(fileName.split('/').join('')) : match;
-  })
-
-  console.warn({
-    replacedDataResult
-  })
-
-  const replacedRulesResult = replacedDataResult.replace(rulesPattern, (match: string, index: string) => {
+  }).replace(rulesPattern, (match: string, index: string) => {
     const ruleIndex = parseInt(index, 10) - 1;
     const ruleName = rulesNames[ruleIndex];
     if (ruleName) {
@@ -107,13 +101,7 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
       return escapeForJson(fileNameWithoutExtension.toUpperCase());
     }
     return match;
-  })
-
-  console.warn({
-    replacedRulesResult
-  })
-
-  const output = JSON.parse(replacedDataResult);
+  }));
 
   return JSON.parse(output);
 }
