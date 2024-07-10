@@ -85,25 +85,34 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
   const dataPattern = /DATA_STDIN\[(\d+)\]/g;
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
 
-  // Ensure JSON.stringify does not produce invalid escape sequences
-  const escapeForJson = (str: string) => str.replace(/\\/g, '\\\\');
+  // Helper function to escape backslashes in a JSON string
+  const escapeBackslashes = (str: string) => str.replace(/\\/g, '\\\\');
 
-  const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
+  // Perform replacements
+  let output = JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
-
-    return fileName ? escapeForJson(fileName.split('/').join('')) : match;
+    return fileName ? fileName.split('/').join('') : match;
   }).replace(rulesPattern, (match: string, index: string) => {
     const ruleIndex = parseInt(index, 10) - 1;
     const ruleName = rulesNames[ruleIndex];
     if (ruleName) {
       const fileNameWithoutExtension = path.basename(ruleName, path.extname(ruleName));
-      return escapeForJson(fileNameWithoutExtension.toUpperCase());
+      return fileNameWithoutExtension.toUpperCase();
     }
     return match;
-  }));
+  });
 
-  return JSON.parse(output);
+  // Escape backslashes
+  output = escapeBackslashes(output);
+
+  // Ensure the output is valid JSON before parsing
+  try {
+    return JSON.parse(output);
+  } catch (e) {
+    console.error('Invalid JSON output:', output);
+    throw e;
+  }
 }
 
   async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {
