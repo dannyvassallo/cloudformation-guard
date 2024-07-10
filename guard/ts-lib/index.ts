@@ -82,37 +82,8 @@ export type SarifShortDescription = {
 }
 
 const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): SarifReport => {
-  const dataPattern = /DATA_STDIN\[(\d+)\]/g;
-  const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
-
-  // Helper function to escape backslashes in a JSON string
-  const escapeBackslashes = (str: string) => str.replace(/\\/g, '\\\\');
-
-  // Perform replacements
-  let output = JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
-    const fileIndex = parseInt(index, 10) - 1;
-    const fileName = dataNames[fileIndex];
-    return fileName ? fileName.split('/').join('') : match;
-  }).replace(rulesPattern, (match: string, index: string) => {
-    const ruleIndex = parseInt(index, 10) - 1;
-    const ruleName = rulesNames[ruleIndex];
-    if (ruleName) {
-      const fileNameWithoutExtension = path.basename(ruleName, path.extname(ruleName));
-      return fileNameWithoutExtension.toUpperCase();
-    }
-    return match;
-  });
-
-  // Escape backslashes
-  output = escapeBackslashes(output);
-
-  // Ensure the output is valid JSON before parsing
-  try {
-    return JSON.parse(output);
-  } catch (e) {
-    console.error('Invalid JSON output:', output);
-    throw e;
-  }
+  console.warn(rulesNames, dataNames)
+  return result;
 }
 
   async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {
