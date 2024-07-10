@@ -100,6 +100,8 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
     return match;
   }));
 
+  console.warn({ output })
+
   return JSON.parse(output);
 }
 

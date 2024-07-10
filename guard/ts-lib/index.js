@@ -22,6 +22,7 @@ const formatOutput = ({ result, rulesNames, dataNames }) => {
         }
         return match;
     }));
+    console.warn({ output });
     return JSON.parse(output);
 };
 async function readFiles(dirPath, supportedExtensions) {
