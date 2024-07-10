@@ -31414,6 +31414,7 @@ async function handleValidate() {
         console.error(error);
     }
     (0, debugLog_1.default)(`Validation result: ${JSON.stringify(result, null, 2)}`);
+    (0, debugLog_1.default)(`Validation result: ${JSON.stringify(result, null, 2)}`);
     core.setOutput('result', JSON.stringify(result, null, 2));
     return result;
 }
