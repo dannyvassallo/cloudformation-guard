@@ -31569,7 +31569,8 @@ const uploadCodeScan_1 = __nccwpck_require__(1806);
  */
 async function run() {
     (0, debugLog_1.debugLog)('Running action');
-    await (0, exec_1.exec)(`git config user.name 'cfn-guard[bot]' && git config user.email 'cfn-guard[bot]@users.noreply.github.com'`);
+    await (0, exec_1.exec)(`git config user.name 'cfn-guard[bot]'`);
+    await (0, exec_1.exec)(`git config user.email 'cfn-guard[bot]@users.noreply.github.com'`);
     const { analyze, checkout } = (0, getConfig_1.default)();
     const { eventName } = github_1.context;
     (0, debugLog_1.debugLog)(`Event type: ${eventName}`);

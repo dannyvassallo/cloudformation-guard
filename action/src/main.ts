@@ -17,9 +17,8 @@ import { uploadCodeScan } from './uploadCodeScan';
  */
 export async function run(): Promise<void> {
   debugLog('Running action');
-  await exec(
-    `git config user.name 'cfn-guard[bot]' && git config user.email 'cfn-guard[bot]@users.noreply.github.com'`
-  );
+  await exec(`git config user.name 'cfn-guard[bot]'`);
+  await exec(`git config user.email 'cfn-guard[bot]@users.noreply.github.com'`);
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
   debugLog(`Event type: ${eventName}`);
