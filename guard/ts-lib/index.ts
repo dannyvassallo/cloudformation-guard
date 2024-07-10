@@ -85,7 +85,7 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
   const dataPattern = /DATA_STDIN\[(\d+)\]/g;
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
 
-  const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
+  const replacedJson = JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
 
@@ -98,9 +98,12 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
       return fileNameWithoutExtension.toUpperCase();
     }
     return match;
-  }));
+  })
 
-  console.warn({ output })
+  console.warn({ replacedJson })
+
+  const output = JSON.parse(replacedJson);
+
 
   return JSON.parse(output);
 }

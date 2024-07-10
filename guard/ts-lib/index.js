@@ -9,7 +9,7 @@ const RULE_FILE_SUPPORTED_EXTENSIONS = ['.guard', '.ruleset'];
 const formatOutput = ({ result, rulesNames, dataNames }) => {
     const dataPattern = /DATA_STDIN\[(\d+)\]/g;
     const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
-    const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match, index) => {
+    const replacedJson = JSON.stringify(result).replace(dataPattern, (match, index) => {
         const fileIndex = parseInt(index, 10) - 1;
         const fileName = dataNames[fileIndex];
         return fileName ? fileName.split('/').join('') : match;
@@ -21,8 +21,9 @@ const formatOutput = ({ result, rulesNames, dataNames }) => {
             return fileNameWithoutExtension.toUpperCase();
         }
         return match;
-    }));
-    console.warn({ output });
+    });
+    console.warn({ replacedJson });
+    const output = JSON.parse(replacedJson);
     return JSON.parse(output);
 };
 async function readFiles(dirPath, supportedExtensions) {
