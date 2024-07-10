@@ -86,7 +86,7 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
   const isWindows = process.platform === 'win32';
 
-  const replacedJson = JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
+  const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
 
@@ -99,11 +99,7 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
       return fileNameWithoutExtension.toUpperCase();
     }
     return match;
-  });
-
-  console.warn({ replacedJson });
-
-  const output = JSON.parse(replacedJson);
+  }));
 
   return JSON.parse(output);
 };
