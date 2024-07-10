@@ -82,8 +82,25 @@ export type SarifShortDescription = {
 }
 
 const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): SarifReport => {
-  console.warn(rulesNames, dataNames)
-  return result;
+  const dataPattern = /DATA_STDIN\[(\d+)\]/g;
+  const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
+
+  const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
+    const fileIndex = parseInt(index, 10) - 1;
+    const fileName = dataNames[fileIndex];
+
+    return fileName ? fileName.split('/').join('') : match;
+  }).replace(rulesPattern, (match: string, index: string) => {
+    const ruleIndex = parseInt(index, 10) - 1;
+    const ruleName = rulesNames[ruleIndex];
+    if (ruleName) {
+      const fileNameWithoutExtension = path.basename(ruleName, path.extname(ruleName));
+      return fileNameWithoutExtension.toUpperCase();
+    }
+    return match;
+  }));
+
+  return JSON.parse(output);
 }
 
   async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {

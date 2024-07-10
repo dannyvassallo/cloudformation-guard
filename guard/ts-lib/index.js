@@ -7,8 +7,22 @@ const fs = require("fs");
 const DATA_FILE_SUPPORTED_EXTENSIONS = ['.yaml', '.yml', '.json', '.jsn', '.template'];
 const RULE_FILE_SUPPORTED_EXTENSIONS = ['.guard', '.ruleset'];
 const formatOutput = ({ result, rulesNames, dataNames }) => {
-    console.warn(rulesNames, dataNames);
-    return result;
+    const dataPattern = /DATA_STDIN\[(\d+)\]/g;
+    const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
+    const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match, index) => {
+        const fileIndex = parseInt(index, 10) - 1;
+        const fileName = dataNames[fileIndex];
+        return fileName ? fileName.split('/').join('') : match;
+    }).replace(rulesPattern, (match, index) => {
+        const ruleIndex = parseInt(index, 10) - 1;
+        const ruleName = rulesNames[ruleIndex];
+        if (ruleName) {
+            const fileNameWithoutExtension = path.basename(ruleName, path.extname(ruleName));
+            return fileNameWithoutExtension.toUpperCase();
+        }
+        return match;
+    }));
+    return JSON.parse(output);
 };
 async function readFiles(dirPath, supportedExtensions) {
     const fileNames = [];
