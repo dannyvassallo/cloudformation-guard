@@ -31256,7 +31256,11 @@ exports.deleteComment = deleteComment;
 async function cleanUpPreviousComments() {
     const prComments = (await getPrComments()).data;
     const userCreatedCommentIds = prComments
-        .map(comment => (comment.user?.name !== github_1.context.actor ? null : comment.id))
+        .map(comment => {
+        (0, debugLog_1.default)(`Checking if comment belongs to ${github_1.context.actor}`);
+        (0, debugLog_1.default)(`Actual owner: ${JSON.stringify(comment.user)}`);
+        return comment.user?.name !== github_1.context.actor ? null : comment.id;
+    })
         .filter(Boolean);
     if (userCreatedCommentIds.length) {
         (0, debugLog_1.default)(`User created comment ids: ${JSON.stringify(userCreatedCommentIds)}`);

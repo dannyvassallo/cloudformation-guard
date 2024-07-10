@@ -82,7 +82,12 @@ export async function deleteComment(comment_id: number): Promise<void> {
 export async function cleanUpPreviousComments(): Promise<void> {
   const prComments = (await getPrComments()).data;
   const userCreatedCommentIds = prComments
-    .map(comment => (comment.user?.name !== context.actor ? null : comment.id))
+    .map(comment => {
+      debugLog(`Checking if comment belongs to ${context.actor}`);
+      debugLog(`Actual owner: ${JSON.stringify(comment.user)}`);
+
+      return comment.user?.name !== context.actor ? null : comment.id;
+    })
     .filter(Boolean);
   if (userCreatedCommentIds.length) {
     debugLog(
