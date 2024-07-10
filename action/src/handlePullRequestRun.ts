@@ -34,6 +34,7 @@ type PRCommentResponse = Promise<
       user: {
         name?: string | null | undefined;
         starred_at?: string | undefined;
+        id: number;
       } | null;
       reactions?:
         | {
@@ -68,6 +69,44 @@ export async function getPrComments(): PRCommentResponse {
   return await octokit.request(ENDPOINT, params);
 }
 
+export async function getCurrentUserId(): Promise<number> {
+  debugLog('Getting current user id...');
+  const { token } = getConfig();
+  const octokit = getOctokit(token);
+  const user = await octokit.rest.users.getAuthenticated();
+  const userId = user.data.id;
+  debugLog(`Current user id is ${userId}`);
+  return userId;
+}
+
+export async function deleteComment(comment_id: number): Promise<void> {
+  debugLog(`Deleting comment: ${comment_id}`);
+  const { token } = getConfig();
+  const octokit = getOctokit(token);
+  octokit.rest.issues.deleteComment({
+    ...context.repo,
+    comment_id
+  });
+}
+
+export async function cleanUpPreviousComments(): Promise<void> {
+  const prComments = (await getPrComments()).data;
+  const currentUserId = await getCurrentUserId();
+  const userCreatedCommentIds = prComments
+    .map(comment => (comment.user?.id !== currentUserId ? null : comment.id))
+    .filter(Boolean);
+  if (userCreatedCommentIds.length) {
+    debugLog(
+      `User created comment ids: ${JSON.stringify(userCreatedCommentIds)}`
+    );
+    for (const commentId of userCreatedCommentIds) {
+      commentId && (await deleteComment(commentId));
+    }
+  } else {
+    debugLog('No comments found moving along...');
+  }
+}
+
 /**
  * Handle the creation of a review on a pull request.
  *
@@ -85,6 +124,9 @@ export async function handleCreateReview({
   const { token } = getConfig();
   const { pull_request } = context.payload;
   if (!pull_request) return;
+
+  await cleanUpPreviousComments();
+
   const octokit = getOctokit(token);
 
   const comments = tmpComments.filter(comment =>
@@ -94,10 +136,6 @@ export async function handleCreateReview({
   debugLog(
     `Creating a review with comments: ${JSON.stringify(comments, null, 2)}`
   );
-
-  const prComments = await getPrComments();
-
-  console.warn({ comments: JSON.stringify(prComments.data) });
 
   for (const comment of comments) {
     try {
