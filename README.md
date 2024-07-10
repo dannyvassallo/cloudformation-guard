@@ -43,6 +43,7 @@ Take this [survey](https://amazonmr.au1.qualtrics.com/jfe/form/SV_bpyzpfoYGGuuUl
 * [AWS Rule Registry](#registry)
 * [Use Guard as a Docker Image](#docker)
 * [Use Guard as a CI tool](#ci)
+* [Use Guard as a pre-commit hook](#pre-commit-hook)
 * [Contribute using the DevContainer in VSCode](#devcontainer)
 * [License](#license)
 
@@ -122,7 +123,7 @@ rule s3_bucket_name_encryption_check when %s3_buckets !empty {
 > 2. Ability to import Guard policy file by reference (local file or GitHub, S3, etc.). It currently only supports a directory on disk of policy files, that it would execute.
 > 3. Parameter/Vault resolution for IaC tools such as CloudFormation or Terraform. Before you ask, the answer is NO. We will not add native support in Guard as the engine is general-purpose. If you need CloudFormation resolution support, raise an issue and we might have a solution for you. We do not support HCL natively. We do, however, support Terraform Plan in JSON to run policies against for deployment safety. If you need HCL support, raise an issue as well.
 > 4. Ability to reference variables like `%s3_buckets`, inside error messages. Both JSON/Console output for evaluation results contain some of this information for inference. We also do not support using variable references to create dynamic regex expressions. However, we support variable references inside queries for cross join support, like `Resources.%references.Properties.Tags`.
-> 5. Support for specifying variable names when accessing map or list elements to cature these values. For example, consider this check `Resources[resource_name].Properties.Tags not empty`, here `resource_name` captures the key or index value. The information is tracked as a part of the evaluation context today and  present in both console/JSON outputs. This support will be extended to regex expression variable captures as well.
+> 5. Support for specifying variable names when accessing map or list elements to capture these values. For example, consider this check `Resources[resource_name].Properties.Tags not empty`, here `resource_name` captures the key or index value. The information is tracked as a part of the evaluation context today and  present in both console/JSON outputs. This support will be extended to regex expression variable captures as well.
 > 6. There are [known issues](docs/KNOWN_ISSUES.md) with potential workarounds that we are tracking towards resolution
 
 **11) What are we really thankful about?**
@@ -629,6 +630,31 @@ Guard is great for CI checks with the Junit output format, making the process of
 ![CircleCI](images/circleci.png)
 
 [Get the template here!](https://github.com/aws-cloudformation/cloudformation-guard/tree/main/guard-examples/ci/.circleci/config.yml)
+
+## <a name="pre-commit-hook"></a> Use Guard as a pre-commit hook
+
+Guard is available as a pre-commit hook and offers both the `test` and `validate` operations. You can use them by adding a variation of the following configuration to your `.pre-commit-config.yaml` file:
+
+```yaml
+repos:
+-   repo: https://github.com/aws-cloudformation/cloudformation-guard
+    rev: pre-commit-v0.0.1
+    hooks:
+        # Validate
+        -   id: cfn-guard
+            args:
+                - --operation=validate # Specify the validate operation
+                - --rules=path/to/rules/ # Rules directory
+            files: ^path/to/data/.* # Directory to watch for changes and validate against
+        # Test
+        -   id: cfn-guard
+            args:
+                - --operation=test # Specify the test operation
+                - --dir=path/to/resources/ # Directory that contains rules & their tests
+            files: ^path/to/resources.* # Same directory supplied to the --dir arg so that rule and test file changes trigger a run
+```
+
+**NOTE**: The args for the pre-commit hook are not identical to the flags you would pass directly to Guard. In the case of this hook, you cannot pass a `data` flag to `validate` as it depends on the `filenames` from the hook and you can only use the `dir` flag for the `test` hook.
 
 ## <a name="devcontainer"></a> Contribute using the DevContainer in VSCode
 
