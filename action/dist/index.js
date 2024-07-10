@@ -31223,12 +31223,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.handlePullRequestRun = exports.handleCreateReview = void 0;
+exports.handlePullRequestRun = exports.handleCreateReview = exports.getPrComments = void 0;
 const github_1 = __nccwpck_require__(5438);
 const stringEnums_1 = __nccwpck_require__(4916);
 const debugLog_1 = __importDefault(__nccwpck_require__(498));
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 const utils_1 = __nccwpck_require__(1314);
+async function getPrComments() {
+    (0, debugLog_1.default)('Getting review comments...');
+    const ENDPOINT = 'GET /repos/{owner}/{repo}/issues/{issue_number}/comments';
+    const { token } = (0, getConfig_1.default)();
+    const octokit = (0, github_1.getOctokit)(token);
+    const headers = { 'X-GitHub-Api-Version': '2022-11-28' };
+    const params = {
+        ...github_1.context.repo,
+        headers,
+        issue_number: github_1.context.issue.number
+    };
+    const result = await octokit.request(ENDPOINT, params);
+    return result;
+}
+exports.getPrComments = getPrComments;
 /**
  * Handle the creation of a review on a pull request.
  *
@@ -31247,11 +31262,8 @@ async function handleCreateReview({ tmpComments, filesWithViolationsInPr }) {
     const octokit = (0, github_1.getOctokit)(token);
     const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
     (0, debugLog_1.default)(`Creating a review with comments: ${JSON.stringify(comments, null, 2)}`);
-    const reviews = await octokit.rest.actions.getReviewsForRun({
-        ...github_1.context.repo,
-        run_id: github_1.context.runId
-    });
-    console.warn({ reviews });
+    const prComments = await getPrComments();
+    console.warn({ prComments });
     for (const comment of comments) {
         try {
             await octokit.rest.pulls.createReview({
