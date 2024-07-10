@@ -31223,7 +31223,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.handlePullRequestRun = exports.handleCreateReview = exports.cleanUpPreviousComments = exports.deleteComment = exports.getCurrentUserId = exports.getPrComments = void 0;
+exports.handlePullRequestRun = exports.handleCreateReview = exports.cleanUpPreviousComments = exports.deleteComment = exports.getPrComments = void 0;
 const github_1 = __nccwpck_require__(5438);
 const stringEnums_1 = __nccwpck_require__(4916);
 const debugLog_1 = __importDefault(__nccwpck_require__(498));
@@ -31243,16 +31243,6 @@ async function getPrComments() {
     return await octokit.request(ENDPOINT, params);
 }
 exports.getPrComments = getPrComments;
-async function getCurrentUserId() {
-    (0, debugLog_1.default)('Getting current user id...');
-    const { token } = (0, getConfig_1.default)();
-    const octokit = (0, github_1.getOctokit)(token);
-    const user = await octokit.rest.users.getAuthenticated();
-    const userId = user.data.id;
-    (0, debugLog_1.default)(`Current user id is ${userId}`);
-    return userId;
-}
-exports.getCurrentUserId = getCurrentUserId;
 async function deleteComment(comment_id) {
     (0, debugLog_1.default)(`Deleting comment: ${comment_id}`);
     const { token } = (0, getConfig_1.default)();
@@ -31265,13 +31255,12 @@ async function deleteComment(comment_id) {
 exports.deleteComment = deleteComment;
 async function cleanUpPreviousComments() {
     const prComments = (await getPrComments()).data;
-    const currentUserId = await getCurrentUserId();
-    const userCreatedCommentIds = prComments
-        .map(comment => (comment.user?.id !== currentUserId ? null : comment.id))
+    const botCreatedCommentIds = prComments
+        .map(comment => comment.user?.name !== 'cfn-guard[bot]' ? null : comment.id)
         .filter(Boolean);
-    if (userCreatedCommentIds.length) {
-        (0, debugLog_1.default)(`User created comment ids: ${JSON.stringify(userCreatedCommentIds)}`);
-        for (const commentId of userCreatedCommentIds) {
+    if (botCreatedCommentIds.length) {
+        (0, debugLog_1.default)(`bot created comment ids: ${JSON.stringify(botCreatedCommentIds)}`);
+        for (const commentId of botCreatedCommentIds) {
             commentId && (await deleteComment(commentId));
         }
     }
@@ -31567,6 +31556,7 @@ const stringEnums_1 = __nccwpck_require__(4916);
 const checkoutRepository_1 = __nccwpck_require__(9274);
 const github_1 = __nccwpck_require__(5438);
 const debugLog_1 = __nccwpck_require__(498);
+const exec_1 = __nccwpck_require__(1514);
 const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 const handlePullRequestRun_1 = __nccwpck_require__(4879);
 const handlePushRun_1 = __nccwpck_require__(5802);
@@ -31579,6 +31569,7 @@ const uploadCodeScan_1 = __nccwpck_require__(1806);
  */
 async function run() {
     (0, debugLog_1.debugLog)('Running action');
+    await (0, exec_1.exec)(`git config user.name 'cfn-guard[bot] && git config user.email 'cfn-guard[bot]@users.noreply.github.com'`);
     const { analyze, checkout } = (0, getConfig_1.default)();
     const { eventName } = github_1.context;
     (0, debugLog_1.debugLog)(`Event type: ${eventName}`);

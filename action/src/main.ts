@@ -3,6 +3,7 @@ import { ErrorStrings, GithubEventNames } from './stringEnums';
 import { checkoutRepository } from './checkoutRepository';
 import { context } from '@actions/github';
 import { debugLog } from './debugLog';
+import { exec } from '@actions/exec';
 import getConfig from './getConfig';
 import { handlePullRequestRun } from './handlePullRequestRun';
 import { handlePushRun } from './handlePushRun';
@@ -16,6 +17,9 @@ import { uploadCodeScan } from './uploadCodeScan';
  */
 export async function run(): Promise<void> {
   debugLog('Running action');
+  await exec(
+    `git config user.name 'cfn-guard[bot] && git config user.email 'cfn-guard[bot]@users.noreply.github.com'`
+  );
   const { analyze, checkout } = getConfig();
   const { eventName } = context;
   debugLog(`Event type: ${eventName}`);
