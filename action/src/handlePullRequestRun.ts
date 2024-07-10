@@ -69,20 +69,6 @@ export async function getPrComments(): PRCommentResponse {
   return await octokit.request(ENDPOINT, params);
 }
 
-export async function getCurrentUserId(): Promise<number> {
-  debugLog('Getting current user id...');
-  const { token } = getConfig();
-  const octokit = getOctokit(token);
-  const user = await octokit.request('GET /user', {
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28'
-    }
-  });
-  const userId = user.data.id;
-  debugLog(`Current user id is ${userId}`);
-  return userId;
-}
-
 export async function deleteComment(comment_id: number): Promise<void> {
   debugLog(`Deleting comment: ${comment_id}`);
   const { token } = getConfig();
@@ -95,9 +81,8 @@ export async function deleteComment(comment_id: number): Promise<void> {
 
 export async function cleanUpPreviousComments(): Promise<void> {
   const prComments = (await getPrComments()).data;
-  const currentUserId = await getCurrentUserId();
   const userCreatedCommentIds = prComments
-    .map(comment => (comment.user?.id !== currentUserId ? null : comment.id))
+    .map(comment => (comment.user?.name !== context.actor ? null : comment.id))
     .filter(Boolean);
   if (userCreatedCommentIds.length) {
     debugLog(
