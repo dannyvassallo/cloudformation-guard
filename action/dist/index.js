@@ -31247,7 +31247,11 @@ async function getCurrentUserId() {
     (0, debugLog_1.default)('Getting current user id...');
     const { token } = (0, getConfig_1.default)();
     const octokit = (0, github_1.getOctokit)(token);
-    const user = await octokit.rest.users.getAuthenticated();
+    const user = await octokit.request('GET /user', {
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
+    });
     const userId = user.data.id;
     (0, debugLog_1.default)(`Current user id is ${userId}`);
     return userId;
