@@ -47,6 +47,13 @@ export async function handleCreateReview({
     `Creating a review with comments: ${JSON.stringify(comments, null, 2)}`
   );
 
+  const reviews = octokit.rest.actions.getReviewsForRun({
+    ...context.repo,
+    run_id: context.runId
+  });
+
+  console.warn({ reviews });
+
   for (const comment of comments) {
     try {
       await octokit.rest.pulls.createReview({

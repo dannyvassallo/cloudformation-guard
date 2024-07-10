@@ -31247,6 +31247,11 @@ async function handleCreateReview({ tmpComments, filesWithViolationsInPr }) {
     const octokit = (0, github_1.getOctokit)(token);
     const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
     (0, debugLog_1.default)(`Creating a review with comments: ${JSON.stringify(comments, null, 2)}`);
+    const reviews = octokit.rest.actions.getReviewsForRun({
+        ...github_1.context.repo,
+        run_id: github_1.context.runId
+    });
+    console.warn({ reviews });
     for (const comment of comments) {
         try {
             await octokit.rest.pulls.createReview({
