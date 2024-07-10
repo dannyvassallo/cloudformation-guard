@@ -31231,7 +31231,7 @@ const getConfig_1 = __importDefault(__nccwpck_require__(5677));
 const utils_1 = __nccwpck_require__(1314);
 async function getPrComments() {
     (0, debugLog_1.default)('Getting review comments...');
-    const ENDPOINT = 'GET /repos/{owner}/{repo}/issues/{issue_number}/comments';
+    const ENDPOINT = 'GET /repos/{owner}/{repo}/pulls/{issue_number}/comments';
     const { token } = (0, getConfig_1.default)();
     const octokit = (0, github_1.getOctokit)(token);
     const headers = { 'X-GitHub-Api-Version': '2022-11-28' };

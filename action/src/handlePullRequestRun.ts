@@ -55,7 +55,7 @@ type PRCommentResponse = Promise<
 
 export async function getPrComments(): PRCommentResponse {
   debugLog('Getting review comments...');
-  const ENDPOINT = 'GET /repos/{owner}/{repo}/issues/{issue_number}/comments';
+  const ENDPOINT = 'GET /repos/{owner}/{repo}/pulls/{issue_number}/comments';
   const { token } = getConfig();
   const octokit = getOctokit(token);
   const headers = { 'X-GitHub-Api-Version': '2022-11-28' };
