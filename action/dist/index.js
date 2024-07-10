@@ -31240,8 +31240,7 @@ async function getPrComments() {
         headers,
         issue_number: github_1.context.issue.number
     };
-    const result = await octokit.request(ENDPOINT, params);
-    return result;
+    return await octokit.request(ENDPOINT, params);
 }
 exports.getPrComments = getPrComments;
 /**
@@ -31263,7 +31262,7 @@ async function handleCreateReview({ tmpComments, filesWithViolationsInPr }) {
     const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
     (0, debugLog_1.default)(`Creating a review with comments: ${JSON.stringify(comments, null, 2)}`);
     const prComments = await getPrComments();
-    console.warn({ prComments });
+    console.warn({ comments: JSON.stringify(prComments.data) });
     for (const comment of comments) {
         try {
             await octokit.rest.pulls.createReview({

@@ -65,9 +65,7 @@ export async function getPrComments(): PRCommentResponse {
     issue_number: context.issue.number
   };
 
-  const result = await octokit.request(ENDPOINT, params);
-
-  return result;
+  return await octokit.request(ENDPOINT, params);
 }
 
 /**
@@ -99,7 +97,7 @@ export async function handleCreateReview({
 
   const prComments = await getPrComments();
 
-  console.warn({ prComments });
+  console.warn({ comments: JSON.stringify(prComments.data) });
 
   for (const comment of comments) {
     try {
