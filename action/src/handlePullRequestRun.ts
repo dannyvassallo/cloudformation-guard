@@ -69,6 +69,16 @@ export async function getPrComments(): PRCommentResponse {
   return await octokit.request(ENDPOINT, params);
 }
 
+export async function getCurrentUserId(): Promise<number> {
+  debugLog('Getting current user id...');
+  const { token } = getConfig();
+  const octokit = getOctokit(token);
+  const user = await octokit.rest.users.getAuthenticated();
+  const userId = user.data.id;
+  debugLog(`Current user id is ${userId}`);
+  return userId;
+}
+
 export async function deleteComment(comment_id: number): Promise<void> {
   debugLog(`Deleting comment: ${comment_id}`);
   const { token } = getConfig();
@@ -81,16 +91,15 @@ export async function deleteComment(comment_id: number): Promise<void> {
 
 export async function cleanUpPreviousComments(): Promise<void> {
   const prComments = (await getPrComments()).data;
-  const botCreatedCommentIds = prComments
-    .map(comment =>
-      comment.user?.name !== 'cfn-guard[bot]' ? null : comment.id
-    )
+  const currentUserId = await getCurrentUserId();
+  const userCreatedCommentIds = prComments
+    .map(comment => (comment.user?.id !== currentUserId ? null : comment.id))
     .filter(Boolean);
-  if (botCreatedCommentIds.length) {
+  if (userCreatedCommentIds.length) {
     debugLog(
-      `bot created comment ids: ${JSON.stringify(botCreatedCommentIds)}`
+      `User created comment ids: ${JSON.stringify(userCreatedCommentIds)}`
     );
-    for (const commentId of botCreatedCommentIds) {
+    for (const commentId of userCreatedCommentIds) {
       commentId && (await deleteComment(commentId));
     }
   } else {
