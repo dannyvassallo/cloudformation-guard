@@ -31223,7 +31223,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.handlePullRequestRun = exports.handleCreateReview = exports.cleanUpPreviousComments = exports.deleteComment = exports.getPrComments = void 0;
+exports.handlePullRequestRun = exports.handleCreateReview = exports.deleteComment = exports.getPrComments = void 0;
 const github_1 = __nccwpck_require__(5438);
 const stringEnums_1 = __nccwpck_require__(4916);
 const debugLog_1 = __importDefault(__nccwpck_require__(498));
@@ -31240,39 +31240,19 @@ async function getPrComments() {
         headers,
         issue_number: github_1.context.issue.number
     };
-    return await octokit.request(ENDPOINT, params);
+    return (await octokit.request(ENDPOINT, params)).data;
 }
 exports.getPrComments = getPrComments;
 async function deleteComment(comment_id) {
     (0, debugLog_1.default)(`Deleting comment: ${comment_id}`);
     const { token } = (0, getConfig_1.default)();
     const octokit = (0, github_1.getOctokit)(token);
-    octokit.rest.issues.deleteComment({
+    await octokit.rest.issues.deleteComment({
         ...github_1.context.repo,
         comment_id
     });
 }
 exports.deleteComment = deleteComment;
-async function cleanUpPreviousComments() {
-    const prComments = (await getPrComments()).data;
-    const userCreatedCommentIds = prComments
-        .map(comment => {
-        (0, debugLog_1.default)(`Checking if comment belongs to ${github_1.context.actor}`);
-        (0, debugLog_1.default)(`Actual owner: ${JSON.stringify(comment.user)}`);
-        return comment.user?.name !== github_1.context.actor ? null : comment.id;
-    })
-        .filter(Boolean);
-    if (userCreatedCommentIds.length) {
-        (0, debugLog_1.default)(`User created comment ids: ${JSON.stringify(userCreatedCommentIds)}`);
-        for (const commentId of userCreatedCommentIds) {
-            commentId && (await deleteComment(commentId));
-        }
-    }
-    else {
-        (0, debugLog_1.default)('No comments found moving along...');
-    }
-}
-exports.cleanUpPreviousComments = cleanUpPreviousComments;
 /**
  * Handle the creation of a review on a pull request.
  *
@@ -31288,12 +31268,19 @@ async function handleCreateReview({ tmpComments, filesWithViolationsInPr }) {
     const { pull_request } = github_1.context.payload;
     if (!pull_request)
         return;
-    await cleanUpPreviousComments();
     const octokit = (0, github_1.getOctokit)(token);
     const comments = tmpComments.filter(comment => filesWithViolationsInPr.includes(comment.path));
+    const prComments = await getPrComments();
     (0, debugLog_1.default)(`Creating a review with comments: ${JSON.stringify(comments, null, 2)}`);
     for (const comment of comments) {
         try {
+            const existingComment = prComments.find(prComment => comment.body === prComment.body);
+            if (existingComment) {
+                console.warn({
+                    comment,
+                    existingComment
+                });
+            }
             await octokit.rest.pulls.createReview({
                 ...github_1.context.repo,
                 comments: [comment],

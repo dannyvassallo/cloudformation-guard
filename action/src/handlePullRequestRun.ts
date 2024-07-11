@@ -1,6 +1,5 @@
 import { context, getOctokit } from '@actions/github';
 import { ErrorStrings } from './stringEnums';
-import type { OctokitResponse } from '@octokit/types';
 import { SarifRun } from 'cfn-guard';
 import debugLog from './debugLog';
 import getConfig from './getConfig';
@@ -22,36 +21,34 @@ type HandleCreateReviewParams = {
 };
 
 type PRCommentResponse = Promise<
-  OctokitResponse<
-    {
+  {
+    id: number;
+    node_id: string;
+    url: string;
+    body?: string | undefined;
+    body_text?: string | undefined;
+    body_html?: string | undefined;
+    html_url: string;
+    user: {
+      name?: string | null | undefined;
+      starred_at?: string | undefined;
       id: number;
-      node_id: string;
-      url: string;
-      body?: string | undefined;
-      body_text?: string | undefined;
-      body_html?: string | undefined;
-      html_url: string;
-      user: {
-        name?: string | null | undefined;
-        starred_at?: string | undefined;
-        id: number;
-      } | null;
-      reactions?:
-        | {
-            url: string;
-            total_count: number;
-            '+1': number;
-            '-1': number;
-            laugh: number;
-            confused: number;
-            heart: number;
-            hooray: number;
-            eyes: number;
-            rocket: number;
-          }
-        | undefined;
-    }[]
-  >
+    } | null;
+    reactions?:
+      | {
+          url: string;
+          total_count: number;
+          '+1': number;
+          '-1': number;
+          laugh: number;
+          confused: number;
+          heart: number;
+          hooray: number;
+          eyes: number;
+          rocket: number;
+        }
+      | undefined;
+  }[]
 >;
 
 export async function getPrComments(): PRCommentResponse {
@@ -66,39 +63,17 @@ export async function getPrComments(): PRCommentResponse {
     issue_number: context.issue.number
   };
 
-  return await octokit.request(ENDPOINT, params);
+  return (await octokit.request(ENDPOINT, params)).data;
 }
 
 export async function deleteComment(comment_id: number): Promise<void> {
   debugLog(`Deleting comment: ${comment_id}`);
   const { token } = getConfig();
   const octokit = getOctokit(token);
-  octokit.rest.issues.deleteComment({
+  await octokit.rest.issues.deleteComment({
     ...context.repo,
     comment_id
   });
-}
-
-export async function cleanUpPreviousComments(): Promise<void> {
-  const prComments = (await getPrComments()).data;
-  const userCreatedCommentIds = prComments
-    .map(comment => {
-      debugLog(`Checking if comment belongs to ${context.actor}`);
-      debugLog(`Actual owner: ${JSON.stringify(comment.user)}`);
-
-      return comment.user?.name !== context.actor ? null : comment.id;
-    })
-    .filter(Boolean);
-  if (userCreatedCommentIds.length) {
-    debugLog(
-      `User created comment ids: ${JSON.stringify(userCreatedCommentIds)}`
-    );
-    for (const commentId of userCreatedCommentIds) {
-      commentId && (await deleteComment(commentId));
-    }
-  } else {
-    debugLog('No comments found moving along...');
-  }
 }
 
 /**
@@ -119,13 +94,13 @@ export async function handleCreateReview({
   const { pull_request } = context.payload;
   if (!pull_request) return;
 
-  await cleanUpPreviousComments();
-
   const octokit = getOctokit(token);
 
   const comments = tmpComments.filter(comment =>
     filesWithViolationsInPr.includes(comment.path)
   );
+
+  const prComments = await getPrComments();
 
   debugLog(
     `Creating a review with comments: ${JSON.stringify(comments, null, 2)}`
@@ -133,6 +108,15 @@ export async function handleCreateReview({
 
   for (const comment of comments) {
     try {
+      const existingComment = prComments.find(
+        prComment => comment.body === prComment.body
+      );
+      if (existingComment) {
+        console.warn({
+          comment,
+          existingComment
+        });
+      }
       await octokit.rest.pulls.createReview({
         ...context.repo,
         comments: [comment],
