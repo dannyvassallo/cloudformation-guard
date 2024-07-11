@@ -7621,15 +7621,16 @@ exports.validate = void 0;
 const guard_1 = __nccwpck_require__(3012);
 const path = __nccwpck_require__(9411);
 const fs = __nccwpck_require__(7147);
-const DATA_FILE_SUPPORTED_EXTENSIONS = [".yaml", ".yml", ".json", ".jsn", ".template"];
-const RULE_FILE_SUPPORTED_EXTENSIONS = [".guard", ".ruleset"];
+const DATA_FILE_SUPPORTED_EXTENSIONS = ['.yaml', '.yml', '.json', '.jsn', '.template'];
+const RULE_FILE_SUPPORTED_EXTENSIONS = ['.guard', '.ruleset'];
 const formatOutput = ({ result, rulesNames, dataNames }) => {
     const dataPattern = /DATA_STDIN\[(\d+)\]/g;
     const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
+    const isWindows = process.platform === 'win32';
     const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match, index) => {
         const fileIndex = parseInt(index, 10) - 1;
         const fileName = dataNames[fileIndex];
-        return fileName ? fileName.replace(/^\//, '') : match;
+        return fileName ? fileName.split(isWindows ? '\\' : '/').join('') : match;
     }).replace(rulesPattern, (match, index) => {
         const ruleIndex = parseInt(index, 10) - 1;
         const ruleName = rulesNames[ruleIndex];
@@ -7648,7 +7649,7 @@ async function readFiles(dirPath, supportedExtensions) {
     const readPromises = files.map(async (file) => {
         const filePath = path.join(dirPath, file.name);
         if (!file.isDirectory() && supportedExtensions.includes(path.extname(filePath))) {
-            const content = await fs.promises.readFile(filePath, "utf8");
+            const content = await fs.promises.readFile(filePath, 'utf8');
             fileNames.push(filePath);
             fileContents.push(content);
         }
