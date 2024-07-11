@@ -23,34 +23,10 @@ type HandleCreateReviewParams = {
 type PRCommentResponse = Promise<
   {
     id: number;
-    node_id: string;
-    url: string;
     body?: string | undefined;
-    body_text?: string | undefined;
-    body_html?: string | undefined;
-    html_url: string;
     path: string;
     line: number;
     position: number;
-    user: {
-      name?: string | null | undefined;
-      starred_at?: string | undefined;
-      id: number;
-    } | null;
-    reactions?:
-      | {
-          url: string;
-          total_count: number;
-          '+1': number;
-          '-1': number;
-          laugh: number;
-          confused: number;
-          heart: number;
-          hooray: number;
-          eyes: number;
-          rocket: number;
-        }
-      | undefined;
   }[]
 >;
 
