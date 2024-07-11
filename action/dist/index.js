@@ -31274,12 +31274,23 @@ async function handleCreateReview({ tmpComments, filesWithViolationsInPr }) {
     (0, debugLog_1.default)(`Creating a review with comments: ${JSON.stringify(comments, null, 2)}`);
     for (const comment of comments) {
         try {
-            const existingComment = prComments.find(prComment => comment.body === prComment.body);
-            if (existingComment) {
-                console.warn({
-                    comment,
-                    existingComment
-                });
+            const existingCommentIds = prComments
+                .map(prComment => comment.body === prComment.body &&
+                comment.path === prComment.path &&
+                comment.position === prComment.position &&
+                prComment.id)
+                .filter(Boolean);
+            if (existingCommentIds.length) {
+                for (const id of existingCommentIds) {
+                    try {
+                        await deleteComment(id);
+                    }
+                    catch (error) {
+                        // If it can't delete a comment, it shouldn't
+                        // break the action
+                        console.error(error);
+                    }
+                }
             }
             await octokit.rest.pulls.createReview({
                 ...github_1.context.repo,

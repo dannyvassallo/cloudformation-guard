@@ -29,6 +29,9 @@ type PRCommentResponse = Promise<
     body_text?: string | undefined;
     body_html?: string | undefined;
     html_url: string;
+    path: string;
+    line: number;
+    position: number;
     user: {
       name?: string | null | undefined;
       starred_at?: string | undefined;
@@ -108,14 +111,25 @@ export async function handleCreateReview({
 
   for (const comment of comments) {
     try {
-      const existingComment = prComments.find(
-        prComment => comment.body === prComment.body
-      );
-      if (existingComment) {
-        console.warn({
-          comment,
-          existingComment
-        });
+      const existingCommentIds = prComments
+        .map(
+          prComment =>
+            comment.body === prComment.body &&
+            comment.path === prComment.path &&
+            comment.position === prComment.position &&
+            prComment.id
+        )
+        .filter(Boolean) as number[];
+      if (existingCommentIds.length) {
+        for (const id of existingCommentIds) {
+          try {
+            await deleteComment(id);
+          } catch (error) {
+            // If it can't delete a comment, it shouldn't
+            // break the action
+            console.error(error);
+          }
+        }
       }
       await octokit.rest.pulls.createReview({
         ...context.repo,
