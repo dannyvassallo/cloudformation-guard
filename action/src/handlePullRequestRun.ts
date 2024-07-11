@@ -73,9 +73,12 @@ export async function deleteComment(comment_id: number): Promise<void> {
   debugLog(`Deleting comment: ${comment_id}`);
   const { token } = getConfig();
   const octokit = getOctokit(token);
-  await octokit.rest.issues.deleteComment({
+  await octokit.request('DELETE /repos/{owner}/{repo}/comments/{comment_id}', {
     ...context.repo,
-    comment_id
+    comment_id,
+    headers: {
+      'X-GitHub-Api-Version': '2022-11-28'
+    }
   });
 }
 
