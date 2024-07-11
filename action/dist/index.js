@@ -31247,7 +31247,7 @@ async function deleteComment(comment_id) {
     (0, debugLog_1.default)(`Deleting comment: ${comment_id}`);
     const { token } = (0, getConfig_1.default)();
     const octokit = (0, github_1.getOctokit)(token);
-    await octokit.request('DELETE /repos/{owner}/{repo}/comments/{comment_id}', {
+    await octokit.request('DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}', {
         ...github_1.context.repo,
         comment_id,
         headers: {
