@@ -5,7 +5,7 @@ Currently the module supports only the validate functionality of cfn-guard and o
 ## Install
 
 ```shell
-npm install 'https://gitpkg.now.sh/aws-cloudformation/cloudformation-guard/guard/ts-lib?5dd58e5'
+npm install 'https://gitpkg.now.sh/aws-cloudformation/cloudformation-guard/guard/ts-lib?a21623e'
 ```
 
 ## How to use

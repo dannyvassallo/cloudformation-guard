@@ -90,7 +90,7 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
 
-    return fileName ? fileName.split(isWindows ? '\\' : '/').join('/') : match;
+    return fileName ? fileName.split(isWindows ? '\\' : '/').join('') : match;
   }).replace(rulesPattern, (match: string, index: string) => {
     const ruleIndex = parseInt(index, 10) - 1;
     const ruleName = rulesNames[ruleIndex];
