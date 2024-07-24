@@ -11,6 +11,7 @@ use clap::{Args, ValueEnum};
 use colored::*;
 use enumflags2::BitFlags;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::commands::files::{alphabetical, iterate_over, last_modified, walk_dir};
 use crate::commands::reporters::validate::structured::StructuredEvaluator;
@@ -280,14 +281,7 @@ impl Executable for Validate {
                     let base = resolve_path(file_or_dir)?;
                     for file in walk_dir(base, cmp) {
                         if file.path().is_file() {
-                            let name = file
-                                .path()
-                                .to_path_buf()
-                                .into_os_string()
-                                .into_string()
-                                .unwrap_or_else(|os_string| {
-                                    os_string.to_string_lossy().into_owned()
-                                });
+                            let name = file.path().to_string_lossy().replace("\\", "/");
                             if has_a_supported_extension(&name, &DATA_FILE_SUPPORTED_EXTENSIONS) {
                                 let mut content = String::new();
                                 let mut reader = BufReader::new(File::open(file.path())?);
