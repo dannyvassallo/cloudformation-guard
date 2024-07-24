@@ -40,6 +40,18 @@ function addHeapObject(obj) {
 
 function getObject(idx) { return heap[idx]; }
 
+function dropObject(idx) {
+    if (idx < 132) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
+}
+
+function takeObject(idx) {
+    const ret = getObject(idx);
+    dropObject(idx);
+    return ret;
+}
+
 function isLikeNone(x) {
     return x === undefined || x === null;
 }
@@ -60,18 +72,6 @@ function getInt32Memory0() {
         cachedInt32Memory0 = new Int32Array(wasm.memory.buffer);
     }
     return cachedInt32Memory0;
-}
-
-function dropObject(idx) {
-    if (idx < 132) return;
-    heap[idx] = heap_next;
-    heap_next = idx;
-}
-
-function takeObject(idx) {
-    const ret = getObject(idx);
-    dropObject(idx);
-    return ret;
 }
 
 let WASM_VECTOR_LEN = 0;
@@ -158,10 +158,10 @@ function handleError(f, args) {
 }
 /**
 */
-module.exports.OutputFormatType = Object.freeze({ SingleLineSummary:0,"0":"SingleLineSummary",JSON:1,"1":"JSON",YAML:2,"2":"YAML",Junit:3,"3":"Junit",Sarif:4,"4":"Sarif", });
+module.exports.ShowSummaryType = Object.freeze({ All:0,"0":"All",Pass:1,"1":"Pass",Fail:2,"2":"Fail",Skip:3,"3":"Skip",None:4,"4":"None", });
 /**
 */
-module.exports.ShowSummaryType = Object.freeze({ All:0,"0":"All",Pass:1,"1":"Pass",Fail:2,"2":"Fail",Skip:3,"3":"Skip",None:4,"4":"None", });
+module.exports.OutputFormatType = Object.freeze({ SingleLineSummary:0,"0":"SingleLineSummary",JSON:1,"1":"JSON",YAML:2,"2":"YAML",Junit:3,"3":"Junit",Sarif:4,"4":"Sarif", });
 
 const ValidateBuilderFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
@@ -360,6 +360,10 @@ module.exports.__wbindgen_string_new = function(arg0, arg1) {
     return addHeapObject(ret);
 };
 
+module.exports.__wbindgen_object_drop_ref = function(arg0) {
+    takeObject(arg0);
+};
+
 module.exports.__wbindgen_try_into_number = function(arg0) {
     let result;
 try { result = +getObject(arg0) } catch (e) { result = e }
@@ -372,10 +376,6 @@ module.exports.__wbindgen_number_get = function(arg0, arg1) {
     const ret = typeof(obj) === 'number' ? obj : undefined;
     getFloat64Memory0()[arg0 / 8 + 1] = isLikeNone(ret) ? 0 : ret;
     getInt32Memory0()[arg0 / 4 + 0] = !isLikeNone(ret);
-};
-
-module.exports.__wbindgen_object_drop_ref = function(arg0) {
-    takeObject(arg0);
 };
 
 module.exports.__wbg_existsSync_2b54de1ac768abd3 = function() { return handleError(function (arg0, arg1) {

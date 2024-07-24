@@ -10,7 +10,6 @@
     "Akshay Rane",
     "Tyler Southwick",
     "Josh Fried",
-    "Dan Vassallo",
     "aws-cloudformation-developers <aws-cloudformation-developers@amazon.com>"
   ],
   "description": "AWS CloudFormation Guard is an open-source general-purpose policy-as-code evaluation tool. It provides developers with a simple-to-use, yet powerful and expressive domain-specific language (DSL) to define policies and enables developers to validate JSON- or YAML- formatted structured data with those policies.",
@@ -23,12 +22,10 @@
   "files": [
     "guard_bg.wasm",
     "guard.js",
-    "guard.d.ts",
-    "index.d.ts",
-    "index.js"
+    "guard.d.ts"
   ],
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "guard.js",
+  "types": "guard.d.ts",
   "keywords": [
     "policy-as-code",
     "guard",
