@@ -84,10 +84,14 @@ export type SarifShortDescription = {
 const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): SarifReport => {
   const dataPattern = /DATA_STDIN\[(\d+)\]/g;
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
-  console.warn(result.runs[0].artifacts.map(({ location: { uri } }) => uri))
+  console.warn(result)
   const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
+    console.warn({
+      fileName,
+      match
+    })
     return fileName || match;
   }).replace(rulesPattern, (match: string, index: string) => {
     const ruleIndex = parseInt(index, 10) - 1;
