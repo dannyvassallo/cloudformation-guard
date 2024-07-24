@@ -9,11 +9,10 @@ const RULE_FILE_SUPPORTED_EXTENSIONS = ['.guard', '.ruleset'];
 const formatOutput = ({ result, rulesNames, dataNames }) => {
     const dataPattern = /DATA_STDIN\[(\d+)\]/g;
     const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
-    const isWindows = process.platform === 'win32';
     const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match, index) => {
         const fileIndex = parseInt(index, 10) - 1;
         const fileName = dataNames[fileIndex];
-        return fileName ? (isWindows ? fileName.split('\\').join('/') : fileName) : match;
+        return fileName || match;
     }).replace(rulesPattern, (match, index) => {
         const ruleIndex = parseInt(index, 10) - 1;
         const ruleName = rulesNames[ruleIndex];

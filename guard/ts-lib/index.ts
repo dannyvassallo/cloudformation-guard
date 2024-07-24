@@ -81,21 +81,14 @@ export type SarifShortDescription = {
   text: string;
 }
 
-type ValidateParams = {
-  dataPath: string;
-  rulesPath: string;
-}
-
 const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): SarifReport => {
   const dataPattern = /DATA_STDIN\[(\d+)\]/g;
   const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
-  const isWindows = process.platform === 'win32';
 
   const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match: string, index: string) => {
     const fileIndex = parseInt(index, 10) - 1;
     const fileName = dataNames[fileIndex];
-
-    return fileName ? (isWindows ? fileName.split('\\').join('/') : fileName) : match;
+    return fileName || match;
   }).replace(rulesPattern, (match: string, index: string) => {
     const ruleIndex = parseInt(index, 10) - 1;
     const ruleName = rulesNames[ruleIndex];
@@ -107,28 +100,33 @@ const formatOutput = ({ result, rulesNames, dataNames }: FormatOutputParams): Sa
   }));
 
   return JSON.parse(output);
-};
-
-async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {
-  const fileNames: string[] = [];
-  const fileContents: string[] = [];
-
-  const files = await fs.promises.readdir(dirPath, { withFileTypes: true });
-  const readPromises = files.map(async (file) => {
-    const filePath = path.join(dirPath, file.name);
-    if (!file.isDirectory() && supportedExtensions.includes(path.extname(filePath))) {
-      const content = await fs.promises.readFile(filePath, 'utf8');
-      fileNames.push(filePath);
-      fileContents.push(content);
-    }
-  });
-  await Promise.all(readPromises);
-
-  return {
-    fileContents,
-    fileNames,
-  };
 }
+
+  async function readFiles(dirPath: string, supportedExtensions: string[]): Promise<TraversalResult> {
+    const fileNames: string[] = [];
+    const fileContents: string[] = [];
+
+    const files = await fs.promises.readdir(dirPath, { withFileTypes: true });
+    const readPromises = files.map(async (file) => {
+      const filePath = path.join(dirPath, file.name);
+      if (!file.isDirectory() && supportedExtensions.includes(path.extname(filePath))) {
+        const content = await fs.promises.readFile(filePath, 'utf8');
+        fileNames.push(filePath);
+        fileContents.push(content);
+      }
+    });
+    await Promise.all(readPromises);
+
+    return {
+      fileContents,
+      fileNames,
+    };
+  }
+
+  type ValidateParams = {
+    dataPath: string;
+    rulesPath: string;
+  }
 
 export const validate = async ({ rulesPath, dataPath }: ValidateParams): Promise<SarifReport> => {
   const rulesResult = await readFiles(rulesPath, RULE_FILE_SUPPORTED_EXTENSIONS);
