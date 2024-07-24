@@ -284,8 +284,10 @@ impl Executable for Validate {
                                 .path()
                                 .to_path_buf()
                                 .into_os_string()
-                                .to_str()
-                                .map_or("".to_string(), String::from);
+                                .into_string()
+                                .unwrap_or_else(|os_string| {
+                                    os_string.to_string_lossy().into_owned()
+                                });
                             if has_a_supported_extension(&name, &DATA_FILE_SUPPORTED_EXTENSIONS) {
                                 let mut content = String::new();
                                 let mut reader = BufReader::new(File::open(file.path())?);
