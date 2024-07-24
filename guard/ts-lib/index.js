@@ -9,7 +9,7 @@ const RULE_FILE_SUPPORTED_EXTENSIONS = ['.guard', '.ruleset'];
 const formatOutput = ({ result, rulesNames, dataNames }) => {
     const dataPattern = /DATA_STDIN\[(\d+)\]/g;
     const rulesPattern = /RULES_STDIN\[(\d+)\]\/DEFAULT/g;
-    console.warn(JSON.stringify(result));
+    console.warn(result.runs[0].artifacts.map(({ location: { uri } }) => uri));
     const output = JSON.parse(JSON.stringify(result).replace(dataPattern, (match, index) => {
         const fileIndex = parseInt(index, 10) - 1;
         const fileName = dataNames[fileIndex];
