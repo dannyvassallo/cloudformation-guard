@@ -11,7 +11,7 @@ import os.path
 
 
 def get_guard_resource_path(relative_path):
-    return os.path.join(os.path.abspath(__file__ + "/../../")) + "/guard/resources/" + relative_path
+    return os.path.join(os.path.abspath(__file__ + "/../../")) + "guard/resources/" + relative_path
 
 
 def test_validate_failing_template():
