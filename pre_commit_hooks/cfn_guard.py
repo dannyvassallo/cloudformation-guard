@@ -153,7 +153,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     for filename in args.filenames:
         if args.operation == "validate":
             rules_args = " ".join([f"--rules={r}" for r in args.rules])
-            cmd = f"validate --rules={args.rules[0]} --data={filename}"
+            cmd = f"validate --rules={rules_args} --data={filename}"
         elif args.operation == "test":
             cmd = f"test --dir={args.dir}"
         else:
