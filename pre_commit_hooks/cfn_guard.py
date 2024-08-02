@@ -142,9 +142,9 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("filenames", nargs="*", help="Files to validate")
-    parser.add_argument("--operation", action="append", help="cfn-guard operation", required=True)
+    parser.add_argument("--operation", help="cfn-guard operation", required=True)
     parser.add_argument("--rules", action="append", help="Rules file/directory")
-    parser.add_argument("--dir", action="append", help="Test & rules directory")
+    parser.add_argument("--dir", help="Test & rules directory")
 
     args = parser.parse_args(argv)
 
@@ -152,6 +152,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     for filename in args.filenames:
         if args.operation[0] == "validate":
+            rules_args = " ".join([f"--rules={r}" for r in args.rules])
             cmd = f"validate --rules={args.rules[0]} --data={filename}"
         elif args.operation[0] == "test":
             cmd = f"test --dir={args.dir[0]}"
