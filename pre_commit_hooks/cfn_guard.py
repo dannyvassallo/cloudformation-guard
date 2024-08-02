@@ -151,11 +151,11 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
     exit_code = 0
 
     for filename in args.filenames:
-        if args.operation[0] == "validate":
+        if args.operation == "validate":
             rules_args = " ".join([f"--rules={r}" for r in args.rules])
             cmd = f"validate --rules={args.rules[0]} --data={filename}"
-        elif args.operation[0] == "test":
-            cmd = f"test --dir={args.dir[0]}"
+        elif args.operation == "test":
+            cmd = f"test --dir={args.dir}"
         else:
             raise CfnGuardPreCommitError(UNKNOWN_OPERATION_MSG)
 
