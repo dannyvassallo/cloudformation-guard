@@ -622,6 +622,10 @@ fn is_string(input: Span) -> IResult<Span, CmpOperator> {
     )(input)
 }
 
+fn is_cidr(input: Span) -> IResult<Span, CmpOperator> {
+    value(CmpOperator::IsCidr, alt((tag("IS_CIDR"), tag("is_cidr"))))(input)
+}
+
 fn is_bool(input: Span) -> IResult<Span, CmpOperator> {
     value(CmpOperator::IsBool, alt((tag("IS_BOOL"), tag("is_bool"))))(input)
 }
@@ -643,7 +647,7 @@ fn is_null(input: Span) -> IResult<Span, CmpOperator> {
 
 fn is_type_operations(input: Span) -> IResult<Span, CmpOperator> {
     alt((
-        is_string, is_list, is_struct, is_bool, is_int, is_null, is_float,
+        is_string, is_list, is_struct, is_bool, is_int, is_null, is_float, is_cidr,
     ))(input)
 }
 

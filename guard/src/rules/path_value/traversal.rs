@@ -54,6 +54,7 @@ fn from_value<'value>(
         PathAwareValue::Null(path)
         | PathAwareValue::String((path, _))
         | PathAwareValue::Regex((path, _))
+        | PathAwareValue::Cidr((path, _))
         | PathAwareValue::Bool((path, _))
         | PathAwareValue::Int((path, _))
         | PathAwareValue::Float((path, _))

@@ -172,6 +172,7 @@ impl MapValue {
 pub(crate) enum PathAwareValue {
     Null(Path),
     String((Path, String)),
+    Cidr((Path, String)),
     Regex((Path, String)),
     Bool((Path, bool)),
     Int((Path, i64)),
@@ -187,7 +188,9 @@ pub(crate) enum PathAwareValue {
 impl Hash for PathAwareValue {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
-            PathAwareValue::String((_, s)) | PathAwareValue::Regex((_, s)) => {
+            PathAwareValue::String((_, s))
+            | PathAwareValue::Regex((_, s))
+            | PathAwareValue::Cidr((_, s)) => {
                 s.hash(state);
             }
 
@@ -486,6 +489,9 @@ impl<'a> TryInto<(String, serde_json::Value)> for &'a PathAwareValue {
             PathAwareValue::Null(_) => Ok((top, serde_json::Value::Null)),
             PathAwareValue::String((_, s)) => Ok((top, serde_json::Value::String(s.clone()))),
             PathAwareValue::Regex((_, r)) => {
+                Ok((top, serde_json::Value::String(format!("/{}/", r))))
+            }
+            PathAwareValue::Cidr((_, r)) => {
                 Ok((top, serde_json::Value::String(format!("/{}/", r))))
             }
             PathAwareValue::Bool((_, bool_)) => Ok((top, serde_json::Value::Bool(*bool_))),
@@ -970,6 +976,7 @@ impl PathAwareValue {
             PathAwareValue::Null(path) => (path, self),
             PathAwareValue::String((path, _)) => (path, self),
             PathAwareValue::Regex((path, _)) => (path, self),
+            PathAwareValue::Cidr((path, _)) => (path, self),
             PathAwareValue::Bool((path, _)) => (path, self),
             PathAwareValue::Int((path, _)) => (path, self),
             PathAwareValue::Float((path, _)) => (path, self),
@@ -987,6 +994,7 @@ impl PathAwareValue {
             PathAwareValue::Null(_path) => "null",
             PathAwareValue::String((_path, _)) => "String",
             PathAwareValue::Regex((_path, _)) => "Regex",
+            PathAwareValue::Cidr((_path, _)) => "Cidr",
             PathAwareValue::Bool((_path, _)) => "bool",
             PathAwareValue::Int((_path, _)) => "int",
             PathAwareValue::Float((_path, _)) => "float",

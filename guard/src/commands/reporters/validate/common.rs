@@ -596,6 +596,12 @@ where
                                     } else {
                                         "was string"
                                     },
+                                IsCidr =>
+                                    if !not {
+                                        "was not a cidr "
+                                    } else {
+                                        "was cidr"
+                                    },
                                 IsBool =>
                                     if !not {
                                         "was not a bool"

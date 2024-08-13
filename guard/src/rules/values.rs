@@ -35,6 +35,7 @@ pub enum CmpOperator {
     IsBool,
     IsInt,
     IsFloat,
+    IsCidr,
     IsNull,
 }
 
@@ -73,6 +74,7 @@ impl Display for CmpOperator {
             CmpOperator::IsMap => f.write_str("IS MAP")?,
             CmpOperator::IsNull => f.write_str("IS NULL")?,
             CmpOperator::IsFloat => f.write_str("IS FLOAT")?,
+            CmpOperator::IsCidr => f.write_str("IS CIDR")?,
         }
         Ok(())
     }

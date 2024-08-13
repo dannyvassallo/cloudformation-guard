@@ -60,6 +60,7 @@ is_type_fn!(is_struct_operation, PathAwareValue::Map(_));
 is_type_fn!(is_int_operation, PathAwareValue::Int(_));
 is_type_fn!(is_float_operation, PathAwareValue::Float(_));
 is_type_fn!(is_bool_operation, PathAwareValue::Bool(_));
+is_type_fn!(is_cidr_operation, PathAwareValue::Cidr(_));
 #[cfg(test)]
 is_type_fn!(is_char_range_operation, PathAwareValue::RangeChar(_));
 #[cfg(test)]
@@ -318,6 +319,15 @@ fn unary_operation<'r, 'l: 'r, 'loc: 'l>(
         (CmpOperator::Empty, not_empty) => box_create_func!(
             element_empty_operation,
             not_empty,
+            inverse,
+            cmp,
+            eval_context,
+            context,
+            custom_message
+        ),
+        (CmpOperator::IsCidr, is_not_cidr) => box_create_func!(
+            is_cidr_operation,
+            is_not_cidr,
             inverse,
             cmp,
             eval_context,

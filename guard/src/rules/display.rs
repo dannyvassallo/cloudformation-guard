@@ -49,6 +49,9 @@ impl Display for ValueOnlyDisplay {
             PathAwareValue::Regex((_path, value)) => {
                 formatter.write_fmt(format_args!("\"/{}/\"", value))?
             }
+            PathAwareValue::Cidr((_path, value)) => {
+                formatter.write_fmt(format_args!("\"{}\"", value))?
+            }
             PathAwareValue::Bool((_path, value)) => {
                 formatter.write_fmt(format_args!("{}", value))?
             }
