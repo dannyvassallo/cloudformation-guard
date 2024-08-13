@@ -1213,7 +1213,7 @@ impl TryFrom<&str> for Function {
             "parse_int" => Ok(Function::ParseInt),
             "parse_char" => Ok(Function::ParseChar),
             "parse_epoch" => Ok(Function::ParseEpoch),
-            _ => Err(Error::UnknownFunction(format!(
+            _ => Err(Error::ParseError(format!(
                 "No function with the name '{name}' exists.",
             ))),
         }

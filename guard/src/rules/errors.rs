@@ -32,8 +32,6 @@ pub enum Error {
     #[error("Variable assignment could not be resolved in rule file or incoming context `{0}`")]
     MissingVariable(String),
     #[error("Conflicting rule or variable assignments inside the same scope `{0}`")]
-    UnknownFunction(String),
-    #[error("Unknown or unsupported function `{0}`")]
     MultipleValues(String),
     #[error("Types or variable assignments have incompatible types to retrieve `{0}`")]
     IncompatibleRetrievalError(String),
