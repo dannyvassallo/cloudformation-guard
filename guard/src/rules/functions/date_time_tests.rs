@@ -1,27 +1,23 @@
-use std::{
-    convert::TryFrom,
-    rc::Rc,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::{convert::TryFrom, rc::Rc};
 
 use crate::rules::{
     eval_context::eval_context_tests::BasicQueryTesting,
     exprs::AccessQuery,
-    functions::date_time::{now, parse_epoch},
+    functions::date_time::{epoch_offset, now, parse_epoch},
     path_value::PathAwareValue,
     EvalContext, QueryResult,
 };
+use chrono::{Datelike, Utc};
+use pretty_assertions::assert_eq;
 
-#[test]
-fn test_parse_epoch() -> crate::rules::Result<()> {
-    let value_str = r#"
+const VALUE_STR: &str = r#"
 {
     "Resources": {
         "LambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
-                "LastModified": "2023-04-21T13:45:32Z",
-                "CreationTime": "2022-01-01T00:00:00Z",
+                "LastModified": "2024-08-21T00:00:00Z",
+                "CreationTime": "2024-08-13T00:00:00Z",
                 "BadValue": "not-a-date"
             }
         }
@@ -29,7 +25,9 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
 }
     "#;
 
-    let value = PathAwareValue::try_from(serde_yaml::from_str::<serde_yaml::Value>(value_str)?)?;
+#[test]
+fn test_parse_epoch() -> crate::rules::Result<()> {
+    let value = PathAwareValue::try_from(serde_yaml::from_str::<serde_yaml::Value>(VALUE_STR)?)?;
 
     let mut eval = BasicQueryTesting {
         root: Rc::new(value),
@@ -51,7 +49,7 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
     let epoch_values = parse_epoch(&results)?;
     assert!(matches!(
         epoch_values[0].as_ref().unwrap(),
-        PathAwareValue::Int((_, 1682084732))
+        PathAwareValue::Int((_, 1724198400))
     ));
 
     let creation_time_query = AccessQuery::try_from(
@@ -68,7 +66,7 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
     let epoch_values = parse_epoch(&results)?;
     assert!(matches!(
         epoch_values[0].as_ref().unwrap(),
-        PathAwareValue::Int((_, 1640995200))
+        PathAwareValue::Int((_, 1723507200))
     ));
 
     let bad_query = AccessQuery::try_from(
@@ -107,10 +105,77 @@ fn test_now() {
         _ => unreachable!(),
     };
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+    let now = Utc::now().timestamp();
 
-    assert!((now as i64 - timestamp).abs() <= 1);
+    assert!((now - timestamp).abs() <= 1);
+}
+
+#[test]
+fn test_epoch_offset() -> crate::rules::Result<()> {
+    let value = PathAwareValue::try_from(serde_yaml::from_str::<serde_yaml::Value>(VALUE_STR)?)?;
+
+    let mut eval = BasicQueryTesting {
+        root: Rc::new(value),
+        recorder: None,
+    };
+
+    let creation_time_query = AccessQuery::try_from(
+        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreationTime"#,
+    )?;
+    let results = eval.query(&creation_time_query.query)?;
+
+    let epoch_values = parse_epoch(&results)?;
+    let creation_time_epoch = match epoch_values[0].as_ref().unwrap() {
+        PathAwareValue::Int((_, epoch)) => *epoch,
+        _ => unreachable!(),
+    };
+
+    let offset_values = epoch_offset(10, "days", "from", Some(creation_time_epoch))?;
+    assert!(matches!(
+        offset_values[0].as_ref().unwrap(),
+        PathAwareValue::Int((_, result_epoch))
+        if *result_epoch == creation_time_epoch + 864000 // 10 days * 86400 seconds/day
+    ));
+
+    let offset_values = epoch_offset(1, "hours", "ago", None)?;
+    let current_time = Utc::now().timestamp();
+    assert!(matches!(
+        offset_values[0].as_ref().unwrap(),
+        PathAwareValue::Int((_, result_epoch))
+        if (current_time - *result_epoch).abs() <= 3600 // within an hour
+    ));
+
+    let offset_values = epoch_offset(3, "months", "from_now", None)?;
+    let current_time = Utc::now().naive_utc();
+    let current_year = current_time.year();
+    let current_month = current_time.month();
+
+    let expected_time = if current_month + 3 > 12 {
+        current_time
+            .with_year(current_year + 1)
+            .and_then(|d| d.with_month((current_month + 3) % 12))
+            .unwrap()
+    } else {
+        current_time.with_month(current_month + 3).unwrap()
+    };
+
+    assert!(matches!(
+        offset_values[0].as_ref().unwrap(),
+        PathAwareValue::Int((_, result_epoch))
+        if *result_epoch == expected_time.timestamp()
+    ));
+
+    let result = epoch_offset(10, "days", "invalid_direction", Some(creation_time_epoch));
+    assert!(result.is_err());
+
+    let result = epoch_offset(10, "invalid_unit", "from_now", None);
+    assert!(result.is_err());
+
+    let invalid_time_query = AccessQuery::try_from(
+        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.BadValue"#,
+    )?;
+    let results = eval.query(&invalid_time_query.query)?;
+    assert!(parse_epoch(&results).is_err());
+
+    Ok(())
 }

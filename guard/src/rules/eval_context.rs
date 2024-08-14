@@ -8,14 +8,12 @@ use crate::rules::functions::converters::{
     parse_bool, parse_char, parse_float, parse_int, parse_str,
 };
 use crate::rules::functions::date_time::{
-    add_duration_to_epoch, extract_int_from_arg, extract_string_from_arg, is_epoch_in_future,
-    is_epoch_in_past, now, parse_epoch, subtract_duration_from_epoch,
+    epoch_offset, extract_int_from_arg, extract_string_from_arg, now, parse_epoch,
 };
 use crate::rules::functions::strings::{
     join, json_parse, regex_replace, substring, to_lower, to_upper, url_decode,
 };
-use crate::rules::path_value::Location;
-use crate::rules::path_value::{MapValue, Path, PathAwareValue};
+use crate::rules::path_value::{Location, MapValue, PathAwareValue};
 use crate::rules::values::CmpOperator;
 use crate::rules::Result;
 use crate::rules::Status::SKIP;
@@ -31,8 +29,6 @@ use std::collections::{BTreeSet, HashMap};
 use std::convert::TryFrom;
 use std::rc::Rc;
 use std::vec::Vec;
-
-use super::functions::date_time::epoch_difference;
 
 pub(crate) struct Scope<'value, 'loc: 'value> {
     root: Rc<PathAwareValue>,
@@ -1198,11 +1194,7 @@ pub(crate) enum Function {
     ParseInt,
     ParseChar,
     ParseEpoch,
-    AddDurationToEpoch,
-    SubtractDurationFromEpoch,
-    EpochDifference,
-    IsEpochInFuture,
-    IsEpochInPast,
+    EpochOffset,
     Now,
 }
 
@@ -1225,12 +1217,8 @@ impl TryFrom<&str> for Function {
             "parse_int" => Ok(Function::ParseInt),
             "parse_char" => Ok(Function::ParseChar),
             "parse_epoch" => Ok(Function::ParseEpoch),
+            "epoch_offset" => Ok(Function::EpochOffset),
             "now" => Ok(Function::Now),
-            "add_duration_to_epoch" => Ok(Function::AddDurationToEpoch),
-            "subtract_duration_from_epoch" => Ok(Function::SubtractDurationFromEpoch),
-            "epoch_difference" => Ok(Function::EpochDifference),
-            "is_epoch_in_future" => Ok(Function::IsEpochInFuture),
-            "is_epoch_in_past" => Ok(Function::IsEpochInPast),
             _ => Err(Error::ParseError(format!(
                 "No function with the name '{name}' exists.",
             ))),
@@ -1239,14 +1227,9 @@ impl TryFrom<&str> for Function {
 }
 
 pub(crate) fn validate_number_of_params(func: &Function, num_args: usize) -> Result<()> {
-    let expected_num_args = match func {
-        Function::Join | Function::EpochDifference => 2,
-        Function::Substring
-        | Function::RegexReplace
-        | Function::AddDurationToEpoch
-        | Function::SubtractDurationFromEpoch
-        | Function::IsEpochInFuture
-        | Function::IsEpochInPast => 3,
+    let valid_num_args = match func {
+        Function::Join => vec![2],
+        Function::Substring | Function::RegexReplace => vec![3],
         Function::Count
         | Function::JsonParse
         | Function::ToUpper
@@ -1257,14 +1240,21 @@ pub(crate) fn validate_number_of_params(func: &Function, num_args: usize) -> Res
         | Function::ParseFloat
         | Function::ParseInt
         | Function::ParseChar
-        | Function::ParseEpoch => 1,
-        Function::Now => 0,
+        | Function::ParseEpoch => vec![1],
+        Function::Now => vec![0],
+        Function::EpochOffset => vec![3, 4],
     };
 
-    if expected_num_args != num_args {
+    if !valid_num_args.contains(&num_args) {
         return Err(Error::ParseError(format!(
             "{:?} function requires {} arguments be passed, but received {}",
-            func, expected_num_args, num_args
+            func,
+            if valid_num_args.len() == 1 {
+                valid_num_args[0].to_string()
+            } else {
+                format!("either {} or {}", valid_num_args[0], valid_num_args[1])
+            },
+            num_args
         )));
     }
 
@@ -1277,89 +1267,6 @@ pub(crate) fn try_handle_function_call(
     args: &[Vec<QueryResult>],
 ) -> Result<Vec<Option<PathAwareValue>>> {
     let value = match func {
-        Function::AddDurationToEpoch => {
-            let epoch = extract_int_from_arg(
-                &args[0],
-                "First argument to add_duration_to_epoch must be an epoch",
-            )?;
-            let duration_str = extract_string_from_arg(
-                &args[1],
-                "Second argument to add_duration_to_epoch must be a duration string",
-            )?;
-            let units = extract_int_from_arg(
-                &args[2],
-                "Third argument to add_duration_to_epoch must be duration units",
-            )?;
-
-            let new_epoch = add_duration_to_epoch(epoch, duration_str, units)?;
-            vec![Some(PathAwareValue::Int((Path::root(), new_epoch)))]
-        }
-        Function::SubtractDurationFromEpoch => {
-            let epoch = extract_int_from_arg(
-                &args[0],
-                "First argument to subtract_duration_from_epoch must be an epoch",
-            )?;
-            let duration_str = extract_string_from_arg(
-                &args[1],
-                "Second argument to subtract_duration_from_epoch must be a duration string",
-            )?;
-            let units = extract_int_from_arg(
-                &args[2],
-                "Third argument to subtract_duration_from_epoch must be duration units",
-            )?;
-
-            let new_epoch = subtract_duration_from_epoch(epoch, duration_str, units)?;
-            vec![Some(PathAwareValue::Int((Path::root(), new_epoch)))]
-        }
-        Function::EpochDifference => {
-            let start_epoch = extract_int_from_arg(
-                &args[0],
-                "First argument to epoch_difference must be an epoch",
-            )?;
-
-            let end_epoch = extract_int_from_arg(
-                &args[1],
-                "Second argument to epoch_difference must be an epoch",
-            )?;
-
-            let difference = epoch_difference(start_epoch, end_epoch)?;
-
-            vec![Some(PathAwareValue::Int((Path::root(), difference)))]
-        }
-        Function::IsEpochInFuture => {
-            let epoch = extract_int_from_arg(
-                &args[0],
-                "First argument to is_epoch_in_future must be an epoch",
-            )?;
-            let duration_str = extract_string_from_arg(
-                &args[1],
-                "Second argument to is_epoch_in_future must be a duration string",
-            )?;
-            let units = extract_int_from_arg(
-                &args[2],
-                "Third argument to is_epoch_in_future must be duration units",
-            )?;
-
-            let is_future = is_epoch_in_future(epoch, duration_str, units)?;
-            vec![Some(PathAwareValue::Bool((Path::root(), is_future)))]
-        }
-        Function::IsEpochInPast => {
-            let epoch = extract_int_from_arg(
-                &args[0],
-                "First argument to is_epoch_in_past must be an epoch",
-            )?;
-            let duration_str = extract_string_from_arg(
-                &args[1],
-                "Second argument to is_epoch_in_past must be a duration string",
-            )?;
-            let units = extract_int_from_arg(
-                &args[2],
-                "Third argument to is_epoch_in_past must be duration units",
-            )?;
-
-            let is_past = is_epoch_in_past(epoch, duration_str, units)?;
-            vec![Some(PathAwareValue::Bool((Path::root(), is_past)))]
-        }
         Function::Count => vec![Some(count(&args[0]))],
         Function::JsonParse => json_parse(&args[0])?,
         Function::RegexReplace => {
@@ -1449,6 +1356,31 @@ pub(crate) fn try_handle_function_call(
         Function::ParseBoolean => parse_bool(&args[0])?,
         Function::ParseChar => parse_char(&args[0])?,
         Function::ParseEpoch => parse_epoch(&args[0])?,
+        Function::EpochOffset => {
+            let units =
+                extract_int_from_arg(&args[0], "unit argument to epoch_offset must be i64")?;
+
+            let duration_str = extract_string_from_arg(
+                &args[1],
+                "duration argument to epoch_offset must be a duration string",
+            )?;
+
+            let direction_str = extract_string_from_arg(
+                &args[2],
+                "direction argument to epoch_offset must be a direction string",
+            )?;
+
+            let epoch = if args.len() > 3 {
+                Some(extract_int_from_arg(
+                    &args[3],
+                    "epoch argument to epoch_offset must be an epoch",
+                )?)
+            } else {
+                None
+            };
+
+            epoch_offset(units, &duration_str, direction_str, epoch)?
+        }
         Function::Now => now()?,
     };
 

@@ -3,30 +3,56 @@ use crate::rules::{
     path_value::{Path, PathAwareValue},
     QueryResult,
 };
-use chrono::{DateTime, Utc};
+use chrono::prelude::*;
+use chrono::{Duration, NaiveDateTime, Utc};
 use std::convert::TryFrom;
 
 #[derive(Debug)]
-pub enum DurationType {
-    Seconds(i64),
-    Minutes(i64),
-    Hours(i64),
-    Days(i64),
-    Weeks(i64),
+pub enum DurationUnit {
+    Seconds,
+    Minutes,
+    Hours,
+    Days,
+    Weeks,
+    Months,
+    Years,
 }
 
-impl TryFrom<(&str, i64)> for DurationType {
-    type Error = Error;
+impl TryFrom<&str> for DurationUnit {
+    type Error = String;
 
-    fn try_from(value: (&str, i64)) -> Result<Self, Self::Error> {
-        let (duration_str, units) = value;
-        match duration_str.to_lowercase().as_str() {
-            "seconds" => Ok(DurationType::Seconds(units)),
-            "minutes" => Ok(DurationType::Minutes(units)),
-            "hours" => Ok(DurationType::Hours(units)),
-            "days" => Ok(DurationType::Days(units)),
-            "weeks" => Ok(DurationType::Weeks(units)),
-            _ => Err(Error::ParseError(duration_str.to_string())),
+    fn try_from(value: &str) -> std::result::Result<DurationUnit, std::string::String> {
+        match value {
+            "seconds" => Ok(DurationUnit::Seconds),
+            "minutes" => Ok(DurationUnit::Minutes),
+            "hours" => Ok(DurationUnit::Hours),
+            "days" => Ok(DurationUnit::Days),
+            "weeks" => Ok(DurationUnit::Weeks),
+            "months" => Ok(DurationUnit::Months),
+            "years" => Ok(DurationUnit::Years),
+            _ => Err(format!("Unsupported duration: {}", value,)),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Direction {
+    FromNow,
+    Ago,
+    From,
+    Before,
+}
+
+impl TryFrom<&str> for Direction {
+    type Error = String;
+
+    fn try_from(value: &str) -> std::result::Result<Direction, std::string::String> {
+        match value {
+            "from_now" => Ok(Direction::FromNow),
+            "ago" => Ok(Direction::Ago),
+            "from" => Ok(Direction::From),
+            "before" => Ok(Direction::Before),
+            _ => Err(format!("Unsupported direction: {}", value,)),
         }
     }
 }
@@ -42,7 +68,7 @@ pub(crate) fn parse_epoch(
                     let datetime = DateTime::parse_from_rfc3339(val)
                         .map_err(|e| {
                             crate::Error::ParseError(format!(
-                                "failed to parse datetime: {val} at {path}: {e}"
+                                "Failed to parse datetime: {val} at {path}: {e}"
                             ))
                         })?
                         .with_timezone(&Utc);
@@ -62,79 +88,82 @@ pub(crate) fn parse_epoch(
     Ok(aggr)
 }
 
-pub(crate) fn add_duration_to_epoch(
-    epoch: i64,
-    duration_str: &str,
+pub(crate) fn epoch_offset(
     units: i64,
-) -> crate::rules::Result<i64> {
-    let duration = DurationType::try_from((duration_str, units));
-    let new_epoch = match duration {
-        Ok(DurationType::Seconds(s)) => epoch + s,
-        Ok(DurationType::Minutes(m)) => epoch + m * 60,
-        Ok(DurationType::Hours(h)) => epoch + h * 3600,
-        Ok(DurationType::Days(d)) => epoch + d * 86400,
-        Ok(DurationType::Weeks(w)) => epoch + w * 604800,
-        Err(err) => return Err(err),
-    };
-    Ok(new_epoch)
-}
-
-pub(crate) fn subtract_duration_from_epoch(
-    epoch: i64,
     duration_str: &str,
-    units: i64,
-) -> crate::rules::Result<i64> {
-    let duration = DurationType::try_from((duration_str, units));
-    let new_epoch = match duration {
-        Ok(DurationType::Seconds(s)) => epoch - s,
-        Ok(DurationType::Minutes(m)) => epoch - m * 60,
-        Ok(DurationType::Hours(h)) => epoch - h * 3600,
-        Ok(DurationType::Days(d)) => epoch - d * 86400,
-        Ok(DurationType::Weeks(w)) => epoch - w * 604800,
-        _ => unreachable!(),
-    };
-    Ok(new_epoch)
-}
+    direction_str: &str,
+    epoch: Option<i64>,
+) -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
+    let duration_unit = DurationUnit::try_from(duration_str)
+        .map_err(|e| crate::Error::ParseError(format!("Failed to create epoch_offset: {e}")))?;
+    let direction = Direction::try_from(direction_str)
+        .map_err(|e| crate::Error::ParseError(format!("Failed to create epoch_offset: {e}")))?;
 
-pub(crate) fn epoch_difference(start_epoch: i64, end_epoch: i64) -> crate::rules::Result<i64> {
-    let result = end_epoch - start_epoch;
-    Ok(result)
-}
+    let now = Utc::now().naive_utc();
 
-pub(crate) fn is_epoch_in_future(
-    epoch: i64,
-    duration_str: &str,
-    units: i64,
-) -> crate::rules::Result<bool> {
-    let duration = DurationType::try_from((duration_str, units));
-    let now = Utc::now().timestamp();
-    let future_epoch = match duration {
-        Ok(DurationType::Seconds(s)) => now + s,
-        Ok(DurationType::Minutes(m)) => now + m * 60,
-        Ok(DurationType::Hours(h)) => now + h * 3600,
-        Ok(DurationType::Days(d)) => now + d * 86400,
-        Ok(DurationType::Weeks(w)) => now + w * 604800,
-        _ => unreachable!(),
+    let new_date = match duration_unit {
+        DurationUnit::Seconds => now + Duration::seconds(units),
+        DurationUnit::Minutes => now + Duration::minutes(units),
+        DurationUnit::Hours => now + Duration::hours(units),
+        DurationUnit::Days => now + Duration::days(units),
+        DurationUnit::Weeks => now + Duration::weeks(units),
+        DurationUnit::Months => {
+            let mut year = now.year();
+            let mut month = now.month() as i32 + units as i32;
+            if month > 12 {
+                year += month / 12;
+                month %= 12;
+            } else if month < 1 {
+                year += (month / 12) - 1;
+                month = 12 + month % 12;
+            }
+            now.with_year(year)
+                .and_then(|d| d.with_month(month as u32))
+                .ok_or_else(|| {
+                    crate::Error::ParseError("Invalid date calculation for months".to_string())
+                })?
+        }
+        DurationUnit::Years => {
+            let year = now.year() + units as i32;
+            now.with_year(year).ok_or_else(|| {
+                crate::Error::ParseError("Invalid date calculation for years".to_string())
+            })?
+        }
     };
-    Ok(epoch > future_epoch)
-}
 
-pub(crate) fn is_epoch_in_past(
-    epoch: i64,
-    duration_str: &str,
-    units: i64,
-) -> crate::rules::Result<bool> {
-    let duration = DurationType::try_from((duration_str, units));
-    let now = Utc::now().timestamp();
-    let past_epoch = match duration {
-        Ok(DurationType::Seconds(s)) => now - s,
-        Ok(DurationType::Minutes(m)) => now - m * 60,
-        Ok(DurationType::Hours(h)) => now - h * 3600,
-        Ok(DurationType::Days(d)) => now - d * 86400,
-        Ok(DurationType::Weeks(w)) => now - w * 604800,
-        _ => unreachable!(),
+    let final_date = match direction {
+        Direction::FromNow => new_date,
+        Direction::Ago => now - (new_date - now),
+        Direction::From => match epoch {
+            Some(from_epoch) => {
+                let from_datetime = NaiveDateTime::from_timestamp_opt(from_epoch, 0)
+                    .ok_or_else(|| crate::Error::ParseError("Invalid epoch".to_string()))?;
+                from_datetime + (new_date - now)
+            }
+            None => {
+                return Err(crate::Error::ParseError(
+                    "Missing epoch when direction is 'from'".to_string(),
+                ))
+            }
+        },
+        Direction::Before => match epoch {
+            Some(before_epoch) => {
+                let from_datetime = NaiveDateTime::from_timestamp_opt(before_epoch, 0)
+                    .ok_or_else(|| crate::Error::ParseError("Invalid epoch".to_string()))?;
+                from_datetime - (new_date - now)
+            }
+            None => {
+                return Err(crate::Error::ParseError(
+                    "Missing epoch when direction is 'before'".to_string(),
+                ))
+            }
+        },
     };
-    Ok(epoch < past_epoch)
+
+    Ok(vec![Some(PathAwareValue::Int((
+        Path::root(),
+        final_date.timestamp(),
+    )))])
 }
 
 pub(crate) fn now() -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
