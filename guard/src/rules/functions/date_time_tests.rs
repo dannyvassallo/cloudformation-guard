@@ -16,8 +16,8 @@ const VALUE_STR: &str = r#"
         "LambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
-                "LastModified": "2024-08-21T00:00:00Z",
-                "CreationTime": "2024-08-13T00:00:00Z",
+                "UpdatedAt": "2024-08-21T00:00:00Z",
+                "CreatedAt": "2024-08-13T00:00:00Z",
                 "BadValue": "not-a-date"
             }
         }
@@ -34,11 +34,11 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
         recorder: None,
     };
 
-    let last_modified_query = AccessQuery::try_from(
-        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.LastModified"#,
+    let updated_at_query = AccessQuery::try_from(
+        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.UpdatedAt"#,
     )?;
 
-    let results = eval.query(&last_modified_query.query)?;
+    let results = eval.query(&updated_at_query.query)?;
     match results[0].clone() {
         QueryResult::Literal(val) | QueryResult::Resolved(val) => {
             assert!(matches!(&*val, PathAwareValue::String(_)));
@@ -52,10 +52,10 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
         PathAwareValue::Int((_, 1724198400))
     ));
 
-    let creation_time_query = AccessQuery::try_from(
-        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreationTime"#,
+    let created_at_query = AccessQuery::try_from(
+        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreatedAt"#,
     )?;
-    let results = eval.query(&creation_time_query.query)?;
+    let results = eval.query(&created_at_query.query)?;
     match results[0].clone() {
         QueryResult::Literal(val) | QueryResult::Resolved(val) => {
             assert!(matches!(&*val, PathAwareValue::String(_)));
@@ -119,22 +119,22 @@ fn test_epoch_offset() -> crate::rules::Result<()> {
         recorder: None,
     };
 
-    let creation_time_query = AccessQuery::try_from(
-        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreationTime"#,
+    let created_at_query = AccessQuery::try_from(
+        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreatedAt"#,
     )?;
-    let results = eval.query(&creation_time_query.query)?;
+    let results = eval.query(&created_at_query.query)?;
 
     let epoch_values = parse_epoch(&results)?;
-    let creation_time_epoch = match epoch_values[0].as_ref().unwrap() {
+    let created_at_epoch = match epoch_values[0].as_ref().unwrap() {
         PathAwareValue::Int((_, epoch)) => *epoch,
         _ => unreachable!(),
     };
 
-    let offset_values = epoch_offset(10, "days", "from", Some(creation_time_epoch))?;
+    let offset_values = epoch_offset(10, "days", "from", Some(created_at_epoch))?;
     assert!(matches!(
         offset_values[0].as_ref().unwrap(),
         PathAwareValue::Int((_, result_epoch))
-        if *result_epoch == creation_time_epoch + 864000 // 10 days * 86400 seconds/day
+        if *result_epoch == created_at_epoch + 864000 // 10 days * 86400 seconds/day
     ));
 
     let offset_values = epoch_offset(1, "hours", "ago", None)?;
@@ -165,7 +165,7 @@ fn test_epoch_offset() -> crate::rules::Result<()> {
         if *result_epoch == expected_time.timestamp()
     ));
 
-    let result = epoch_offset(10, "days", "invalid_direction", Some(creation_time_epoch));
+    let result = epoch_offset(10, "days", "invalid_direction", Some(created_at_epoch));
     assert!(result.is_err());
 
     let result = epoch_offset(10, "invalid_unit", "from_now", None);

@@ -9,8 +9,8 @@ Resources:
         }
       Arn: arn:aws:newservice:us-west-2:123456789012:Table/extracted
       Encoded: This%20string%20will%20be%20URL%20encoded
-      LastUpdated: "2024-08-15T00:00:00Z"
-      CreationDate: "2023-01-01T12:00:00Z"
+      UpdatedAt: "2024-08-15T00:00:00Z"
+      CreatedAt: "2023-01-01T12:00:00Z"
     Collection:
       - a
       - b
@@ -58,4 +58,4 @@ Resources:
       DefaultInstanceWarmup: 1.5
       HealthCheckGracePeriod: 1
       HealthCheckType: "true"
-      LastUpdated: "4024-08-10T00:00:00Z"
+      UpdatedAt: "4024-08-10T00:00:00Z"
