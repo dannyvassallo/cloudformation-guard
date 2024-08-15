@@ -707,6 +707,8 @@ mod validate_tests {
     }
 
     #[rstest::rstest]
+    #[case("epoch_offset.guard")]
+    #[case("now.guard")]
     #[case("regex_replace.guard")]
     #[case("substring.guard")]
     #[case("json_parse.guard")]

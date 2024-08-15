@@ -94,6 +94,7 @@ pub(crate) fn epoch_offset(
     direction_str: &str,
     epoch: Option<i64>,
 ) -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
+    let path = Path::try_from("epoch_offset")?;
     let duration_unit = DurationUnit::try_from(duration_str)
         .map_err(|e| crate::Error::ParseError(format!("Failed to create epoch_offset: {e}")))?;
     let direction = Direction::try_from(direction_str)
@@ -161,14 +162,15 @@ pub(crate) fn epoch_offset(
     };
 
     Ok(vec![Some(PathAwareValue::Int((
-        Path::root(),
+        path,
         final_date.timestamp(),
     )))])
 }
 
 pub(crate) fn now() -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
     let now = Utc::now().timestamp();
-    let path_aware_value = PathAwareValue::Int((Path::root(), now));
+    let path = Path::try_from("now")?;
+    let path_aware_value = PathAwareValue::Int((path, now));
     Ok(vec![Some(path_aware_value)])
 }
 

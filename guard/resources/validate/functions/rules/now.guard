@@ -1,0 +1,11 @@
+let current_time = now()
+let auto_scaling_group = Resources.*[ Type == 'AWS::AutoScaling::AutoScalingGroup' ]
+let last_update_time = parse_epoch(%auto_scaling_group.Properties.LastUpdated)
+
+rule CHECK_LAST_UPDATE_TIME when %auto_scaling_group !empty {
+  %current_time < %last_update_time
+  <<
+     VIOLATION: AutoScalingGroup is old
+     FIX: Update AutoScalingGroup
+  >>
+}
