@@ -60,6 +60,7 @@ impl TryFrom<&str> for Direction {
 pub(crate) fn parse_epoch(
     args: &[QueryResult],
 ) -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
+    let new_path = Path::try_from("parse_epoch")?;
     let mut aggr = vec![];
     for entry in args.iter() {
         match entry {
@@ -73,7 +74,7 @@ pub(crate) fn parse_epoch(
                         })?
                         .with_timezone(&Utc);
                     let epoch = datetime.timestamp();
-                    aggr.push(Some(PathAwareValue::Int((path.clone(), epoch))));
+                    aggr.push(Some(PathAwareValue::Int((new_path.clone(), epoch))));
                 }
                 _ => {
                     aggr.push(None);
