@@ -1379,7 +1379,7 @@ pub(crate) fn try_handle_function_call(
                 None
             };
 
-            epoch_offset(units, &duration_str, direction_str, epoch)?
+            epoch_offset(units, duration_str, direction_str, epoch)?
         }
         Function::Now => now()?,
     };
