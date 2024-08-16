@@ -1089,14 +1089,26 @@ pub(crate) fn let_value(input: Span) -> IResult<Span, LetValue> {
 }
 
 fn call_expr(input: Span) -> IResult<Span, (String, Vec<LetValue>)> {
-    tuple((
-        var_name,
-        delimited(
-            char('('),
-            separated_list(char(','), delimited(multispace0, let_value, multispace0)),
-            char(')'),
-        ),
-    ))(input)
+    let (input, name) = var_name(input)?;
+
+    if !input.fragment().starts_with('(') {
+        return Err(nom::Err::Error(ParserError {
+            context: "Expected opening parenthesis after function name".to_string(),
+            kind: ErrorKind::Char,
+            span: input,
+        }));
+    }
+
+    let (input, args) = delimited(
+        char('('),
+        opt(separated_list(
+            char(','),
+            delimited(multispace0, let_value, multispace0),
+        )),
+        char(')'),
+    )(input)?;
+
+    Ok((input, (name, args.unwrap_or_default())))
 }
 
 pub(crate) fn parameterized_rule_call_clause(
@@ -1717,6 +1729,14 @@ fn parameter_names(input: Span) -> IResult<Span, indexmap::IndexSet<String>> {
         ),
         char(')'),
     )(input)
+    .map_err(|err| match err {
+        nom::Err::Error(e) | nom::Err::Failure(e) => nom::Err::Error(ParserError {
+            context: "Failed to parse parameter names".to_string(),
+            kind: e.kind,
+            span: input,
+        }),
+        nom::Err::Incomplete(needed) => nom::Err::Incomplete(needed),
+    })
 }
 
 //
