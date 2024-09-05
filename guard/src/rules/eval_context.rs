@@ -27,6 +27,8 @@ use std::convert::TryFrom;
 use std::rc::Rc;
 use std::vec::Vec;
 
+use super::functions::date_time::{epoch_from_seconds, now, parse_epoch};
+
 pub(crate) struct Scope<'value, 'loc: 'value> {
     root: Rc<PathAwareValue>,
     resolved_variables: HashMap<&'value str, Vec<QueryResult>>,
@@ -1178,19 +1180,22 @@ impl<'value, 'loc: 'value> EvalContext<'value, 'loc> for RootScope<'value, 'loc>
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum FunctionName {
-    Join,
-    Substring,
-    RegexReplace,
     Count,
+    EpochFromSeconds,
+    Join,
     JsonParse,
-    ToUpper,
-    ToLower,
-    UrlDecode,
-    ParseString,
+    Now,
     ParseBoolean,
+    ParseChar,
+    ParseEpoch,
     ParseFloat,
     ParseInt,
-    ParseChar,
+    ParseString,
+    RegexReplace,
+    Substring,
+    ToLower,
+    ToUpper,
+    UrlDecode,
 }
 
 impl FunctionName {
@@ -1207,7 +1212,10 @@ impl FunctionName {
             | FunctionName::ParseBoolean
             | FunctionName::ParseFloat
             | FunctionName::ParseInt
+            | FunctionName::ParseEpoch
+            | FunctionName::EpochFromSeconds
             | FunctionName::ParseChar => 1,
+            FunctionName::Now => 0,
         }
     }
 }
@@ -1215,19 +1223,22 @@ impl FunctionName {
 impl std::fmt::Display for FunctionName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self {
-            FunctionName::Join => "join",
-            FunctionName::Substring => "substring",
-            FunctionName::RegexReplace => "regex_replace",
             FunctionName::Count => "count",
+            FunctionName::Join => "join",
             FunctionName::JsonParse => "json_parse",
-            FunctionName::ToUpper => "to_upper",
-            FunctionName::ToLower => "to_lower",
-            FunctionName::UrlDecode => "url_decode",
-            FunctionName::ParseString => "parse_string",
+            FunctionName::Now => "now",
             FunctionName::ParseBoolean => "parse_boolean",
+            FunctionName::ParseChar => "parse_char",
+            FunctionName::ParseEpoch => "parse_epoch",
+            FunctionName::EpochFromSeconds => "epoch_from_seconds",
             FunctionName::ParseFloat => "parse_float",
             FunctionName::ParseInt => "parse_int",
-            FunctionName::ParseChar => "parse_char",
+            FunctionName::ParseString => "parse_string",
+            FunctionName::RegexReplace => "regex_replace",
+            FunctionName::Substring => "substring",
+            FunctionName::ToLower => "to_lower",
+            FunctionName::ToUpper => "to_upper",
+            FunctionName::UrlDecode => "url_decode",
         };
         write!(f, "{}", name)
     }
@@ -1238,19 +1249,22 @@ impl TryFrom<&str> for FunctionName {
 
     fn try_from(name: &str) -> std::result::Result<Self, Self::Error> {
         match name {
-            "join" => Ok(FunctionName::Join),
-            "substring" => Ok(FunctionName::Substring),
-            "regex_replace" => Ok(FunctionName::RegexReplace),
             "count" => Ok(FunctionName::Count),
+            "epoch_from_seconds" => Ok(FunctionName::EpochFromSeconds),
+            "join" => Ok(FunctionName::Join),
             "json_parse" => Ok(FunctionName::JsonParse),
-            "to_upper" => Ok(FunctionName::ToUpper),
-            "to_lower" => Ok(FunctionName::ToLower),
-            "url_decode" => Ok(FunctionName::UrlDecode),
-            "parse_string" => Ok(FunctionName::ParseString),
+            "now" => Ok(FunctionName::Now),
             "parse_boolean" => Ok(FunctionName::ParseBoolean),
+            "parse_char" => Ok(FunctionName::ParseChar),
+            "parse_epoch" => Ok(FunctionName::ParseEpoch),
             "parse_float" => Ok(FunctionName::ParseFloat),
             "parse_int" => Ok(FunctionName::ParseInt),
-            "parse_char" => Ok(FunctionName::ParseChar),
+            "parse_string" => Ok(FunctionName::ParseString),
+            "regex_replace" => Ok(FunctionName::RegexReplace),
+            "substring" => Ok(FunctionName::Substring),
+            "to_lower" => Ok(FunctionName::ToLower),
+            "to_upper" => Ok(FunctionName::ToUpper),
+            "url_decode" => Ok(FunctionName::UrlDecode),
             _ => Err(Error::ParseError(format!(
                 "No function with the name '{name}' exists.",
             ))),
@@ -1271,6 +1285,10 @@ struct ParseFloatFunction;
 struct ParseStringFunction;
 struct ParseBooleanFunction;
 struct ParseCharFunction;
+struct ParseEpochFunction;
+struct NowFunction;
+
+struct EpochFromSeconds;
 
 trait Callable {
     fn call(&self, args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>>;
@@ -1292,6 +1310,39 @@ impl Callable for FunctionName {
             FunctionName::ParseString => ParseStringFunction.call(args),
             FunctionName::ParseBoolean => ParseBooleanFunction.call(args),
             FunctionName::ParseChar => ParseCharFunction.call(args),
+            FunctionName::ParseEpoch => ParseEpochFunction.call(args),
+            FunctionName::EpochFromSeconds => EpochFromSeconds.call(args),
+            FunctionName::Now => NowFunction.call(args),
+        }
+    }
+}
+
+impl Callable for ParseEpochFunction {
+    fn call(&self, args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>> {
+        parse_epoch(&args[0])
+    }
+}
+
+impl Callable for NowFunction {
+    fn call(&self, _args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>> {
+        now()
+    }
+}
+
+impl Callable for EpochFromSeconds {
+    fn call(&self, args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>> {
+        if let [QueryResult::Literal(val)] = &args[0][..] {
+            if let PathAwareValue::Int((_, seconds)) = &**val {
+                epoch_from_seconds(*seconds)
+            } else {
+                Err(Error::ParseError(
+                    "epoch_from_seconds expects an integer argument".to_string(),
+                ))
+            }
+        } else {
+            Err(Error::ParseError(
+                "epoch_from_seconds expects a single integer argument".to_string(),
+            ))
         }
     }
 }
