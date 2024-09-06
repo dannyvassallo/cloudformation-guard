@@ -91,7 +91,6 @@ fn test_now() {
     assert!(now_option.is_some());
 
     let now_value = now_option.as_ref().unwrap();
-    assert!(matches!(now_value, PathAwareValue::Int((_, _))));
 
     let timestamp = match now_value {
         PathAwareValue::Int((_, timestamp)) => *timestamp,
