@@ -4,12 +4,10 @@ use crate::rules::{
 };
 use chrono::prelude::*;
 use chrono::Utc;
-use std::convert::TryFrom;
 
 pub(crate) fn parse_epoch(
     args: &[QueryResult],
 ) -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
-    let new_path = Path::try_from("parse_epoch")?;
     let mut aggr = vec![];
     for entry in args.iter() {
         match entry {
@@ -23,7 +21,7 @@ pub(crate) fn parse_epoch(
                         })?
                         .with_timezone(&Utc);
                     let epoch = datetime.timestamp();
-                    aggr.push(Some(PathAwareValue::Int((new_path.clone(), epoch))));
+                    aggr.push(Some(PathAwareValue::Int((path.clone(), epoch))));
                 }
                 _ => {
                     aggr.push(None);
@@ -40,23 +38,8 @@ pub(crate) fn parse_epoch(
 
 pub(crate) fn now() -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
     let now = Utc::now().timestamp();
-    let path = Path::try_from("now")?;
+    let path = Path::root();
     let path_aware_value = PathAwareValue::Int((path, now));
-    Ok(vec![Some(path_aware_value)])
-}
-
-pub(crate) fn epoch_from_seconds(
-    seconds: i64,
-) -> crate::rules::Result<Vec<Option<PathAwareValue>>> {
-    let new_path = Path::try_from("epoch_from_seconds")?;
-    let naive_datetime = NaiveDateTime::from_timestamp_opt(seconds, 0).ok_or_else(|| {
-        crate::Error::ParseError(format!(
-            "Failed to create NaiveDateTime from seconds: {seconds}"
-        ))
-    })?;
-    let datetime: DateTime<Utc> = DateTime::from_utc(naive_datetime, Utc);
-    let epoch = datetime.timestamp();
-    let path_aware_value = PathAwareValue::Int((new_path, epoch));
     Ok(vec![Some(path_aware_value)])
 }
 

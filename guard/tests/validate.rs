@@ -707,7 +707,6 @@ mod validate_tests {
     }
 
     #[rstest::rstest]
-    #[case("epoch_from_seconds.guard")]
     #[case("now.guard")]
     #[case("parse_epoch.guard")]
     #[case("regex_replace.guard")]

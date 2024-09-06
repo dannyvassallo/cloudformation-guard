@@ -27,7 +27,7 @@ use std::convert::TryFrom;
 use std::rc::Rc;
 use std::vec::Vec;
 
-use super::functions::date_time::{epoch_from_seconds, now, parse_epoch};
+use super::functions::date_time::{now, parse_epoch};
 
 pub(crate) struct Scope<'value, 'loc: 'value> {
     root: Rc<PathAwareValue>,
@@ -1181,7 +1181,6 @@ impl<'value, 'loc: 'value> EvalContext<'value, 'loc> for RootScope<'value, 'loc>
 #[serde(rename_all = "snake_case")]
 pub(crate) enum FunctionName {
     Count,
-    EpochFromSeconds,
     Join,
     JsonParse,
     Now,
@@ -1213,7 +1212,6 @@ impl FunctionName {
             | FunctionName::ParseFloat
             | FunctionName::ParseInt
             | FunctionName::ParseEpoch
-            | FunctionName::EpochFromSeconds
             | FunctionName::ParseChar => 1,
             FunctionName::Now => 0,
         }
@@ -1230,7 +1228,6 @@ impl std::fmt::Display for FunctionName {
             FunctionName::ParseBoolean => "parse_boolean",
             FunctionName::ParseChar => "parse_char",
             FunctionName::ParseEpoch => "parse_epoch",
-            FunctionName::EpochFromSeconds => "epoch_from_seconds",
             FunctionName::ParseFloat => "parse_float",
             FunctionName::ParseInt => "parse_int",
             FunctionName::ParseString => "parse_string",
@@ -1250,7 +1247,6 @@ impl TryFrom<&str> for FunctionName {
     fn try_from(name: &str) -> std::result::Result<Self, Self::Error> {
         match name {
             "count" => Ok(FunctionName::Count),
-            "epoch_from_seconds" => Ok(FunctionName::EpochFromSeconds),
             "join" => Ok(FunctionName::Join),
             "json_parse" => Ok(FunctionName::JsonParse),
             "now" => Ok(FunctionName::Now),
@@ -1288,8 +1284,6 @@ struct ParseCharFunction;
 struct ParseEpochFunction;
 struct NowFunction;
 
-struct EpochFromSeconds;
-
 trait Callable {
     fn call(&self, args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>>;
 }
@@ -1311,7 +1305,6 @@ impl Callable for FunctionName {
             FunctionName::ParseBoolean => ParseBooleanFunction.call(args),
             FunctionName::ParseChar => ParseCharFunction.call(args),
             FunctionName::ParseEpoch => ParseEpochFunction.call(args),
-            FunctionName::EpochFromSeconds => EpochFromSeconds.call(args),
             FunctionName::Now => NowFunction.call(args),
         }
     }
@@ -1326,24 +1319,6 @@ impl Callable for ParseEpochFunction {
 impl Callable for NowFunction {
     fn call(&self, _args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>> {
         now()
-    }
-}
-
-impl Callable for EpochFromSeconds {
-    fn call(&self, args: &[Vec<QueryResult>]) -> Result<Vec<Option<PathAwareValue>>> {
-        if let [QueryResult::Literal(val)] = &args[0][..] {
-            if let PathAwareValue::Int((_, seconds)) = &**val {
-                epoch_from_seconds(*seconds)
-            } else {
-                Err(Error::ParseError(
-                    "epoch_from_seconds expects an integer argument".to_string(),
-                ))
-            }
-        } else {
-            Err(Error::ParseError(
-                "epoch_from_seconds expects a single integer argument".to_string(),
-            ))
-        }
     }
 }
 

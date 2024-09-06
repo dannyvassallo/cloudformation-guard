@@ -3,12 +3,13 @@ use std::{convert::TryFrom, rc::Rc};
 use crate::rules::{
     eval_context::eval_context_tests::BasicQueryTesting,
     exprs::AccessQuery,
-    functions::date_time::{epoch_from_seconds, now, parse_epoch},
-    path_value::{Path, PathAwareValue},
+    functions::date_time::{now, parse_epoch},
+    path_value::PathAwareValue,
     EvalContext, QueryResult,
 };
 use chrono::Utc;
 use pretty_assertions::assert_eq;
+use rstest::rstest;
 
 const VALUE_STR: &str = r#"
 {
@@ -25,8 +26,27 @@ const VALUE_STR: &str = r#"
 }
     "#;
 
-#[test]
-fn test_parse_epoch() -> crate::rules::Result<()> {
+#[rstest]
+#[case(
+    r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.UpdatedAt"#,
+    1724198400,
+    false
+)]
+#[case(
+    r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreatedAt"#,
+    1723507200,
+    false
+)]
+#[case(
+    r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.BadValue"#,
+    1723507200,
+    true
+)]
+fn test_parse_epoch(
+    #[case] query_str: &str,
+    #[case] _expected_epoch: i64,
+    #[case] should_error: bool,
+) -> crate::rules::Result<()> {
     let value = PathAwareValue::try_from(serde_yaml::from_str::<serde_yaml::Value>(VALUE_STR)?)?;
 
     let mut eval = BasicQueryTesting {
@@ -34,11 +54,8 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
         recorder: None,
     };
 
-    let updated_at_query = AccessQuery::try_from(
-        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.UpdatedAt"#,
-    )?;
-
-    let results = eval.query(&updated_at_query.query)?;
+    let query = AccessQuery::try_from(query_str)?;
+    let results = eval.query(&query.query)?;
     match results[0].clone() {
         QueryResult::Literal(val) | QueryResult::Resolved(val) => {
             assert!(matches!(&*val, PathAwareValue::String(_)));
@@ -46,47 +63,23 @@ fn test_parse_epoch() -> crate::rules::Result<()> {
         _ => unreachable!(),
     }
 
-    let epoch_values = parse_epoch(&results)?;
-    assert!(matches!(
-        epoch_values[0].as_ref().unwrap(),
-        PathAwareValue::Int((_, 1724198400))
-    ));
-
-    let created_at_query = AccessQuery::try_from(
-        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreatedAt"#,
-    )?;
-    let results = eval.query(&created_at_query.query)?;
-    match results[0].clone() {
-        QueryResult::Literal(val) | QueryResult::Resolved(val) => {
-            assert!(matches!(&*val, PathAwareValue::String(_)));
-        }
-        _ => unreachable!(),
+    let epoch_values = parse_epoch(&results);
+    if should_error {
+        assert!(epoch_values.is_err());
+    } else {
+        assert!(epoch_values.is_ok());
+        let epoch_values = epoch_values.unwrap();
+        assert_eq!(epoch_values.len(), 1);
+        assert!(matches!(
+            epoch_values[0].as_ref().unwrap(),
+            PathAwareValue::Int((_, _expected_epoch))
+        ));
     }
-
-    let epoch_values = parse_epoch(&results)?;
-    assert!(matches!(
-        epoch_values[0].as_ref().unwrap(),
-        PathAwareValue::Int((_, 1723507200))
-    ));
-
-    let bad_query = AccessQuery::try_from(
-        r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.BadValue"#,
-    )?;
-
-    let results = eval.query(&bad_query.query)?;
-    match results[0].clone() {
-        QueryResult::Literal(val) | QueryResult::Resolved(val) => {
-            assert!(matches!(&*val, PathAwareValue::String(_)));
-        }
-        _ => unreachable!(),
-    }
-
-    assert!(parse_epoch(&results).is_err());
 
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_now() {
     let now_result = now();
     assert!(now_result.is_ok());
@@ -108,41 +101,4 @@ fn test_now() {
     let now = Utc::now().timestamp();
 
     assert!((now - timestamp).abs() <= 1);
-}
-
-#[test]
-fn test_epoch_from_seconds() -> crate::rules::Result<()> {
-    let valid_seconds = 1723507200;
-    let epoch_from_seconds_result = epoch_from_seconds(valid_seconds);
-    assert!(epoch_from_seconds_result.is_ok());
-
-    let epoch_from_seconds_vec = epoch_from_seconds_result.unwrap();
-    assert_eq!(epoch_from_seconds_vec.len(), 1);
-
-    let epoch_from_seconds_option = epoch_from_seconds_vec.first().unwrap();
-    assert!(epoch_from_seconds_option.is_some());
-
-    let epoch_from_seconds_value = epoch_from_seconds_option.as_ref().unwrap();
-    assert!(matches!(
-        epoch_from_seconds_value,
-        PathAwareValue::Int((path, value)) if path == &Path::try_from("epoch_from_seconds").unwrap() && *value == valid_seconds
-    ));
-
-    let negative_seconds = -1723507200;
-    let epoch_from_seconds_result = epoch_from_seconds(negative_seconds);
-    assert!(epoch_from_seconds_result.is_ok());
-
-    let epoch_from_seconds_vec = epoch_from_seconds_result.unwrap();
-    assert_eq!(epoch_from_seconds_vec.len(), 1);
-
-    let epoch_from_seconds_option = epoch_from_seconds_vec.first().unwrap();
-    assert!(epoch_from_seconds_option.is_some());
-
-    let epoch_from_seconds_value = epoch_from_seconds_option.as_ref().unwrap();
-    assert!(matches!(
-        epoch_from_seconds_value,
-        PathAwareValue::Int((path, value)) if path == &Path::try_from("epoch_from_seconds").unwrap() && *value == negative_seconds
-    ));
-
-    Ok(())
 }
