@@ -27,21 +27,9 @@ const VALUE_STR: &str = r#"
     "#;
 
 #[rstest]
-#[case(
-    r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.UpdatedAt"#,
-    1724198400,
-    false
-)]
-#[case(
-    r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.CreatedAt"#,
-    1723507200,
-    false
-)]
-#[case(
-    r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.BadValue"#,
-    1723507200,
-    true
-)]
+#[case(r#"UpdatedAt"#, 1724198400, false)]
+#[case(r#"CreatedAt"#, 1723507200, false)]
+#[case(r#"BadValue"#, 1723507200, true)]
 fn test_parse_epoch(
     #[case] query_str: &str,
     #[case] _expected_epoch: i64,
@@ -53,8 +41,9 @@ fn test_parse_epoch(
         root: Rc::new(value),
         recorder: None,
     };
-
-    let query = AccessQuery::try_from(query_str)?;
+    let root_query =
+        format!(r#"Resources[ Type == 'AWS::Lambda::Function' ].Properties.{query_str}"#,);
+    let query = AccessQuery::try_from(root_query.as_str())?;
     let results = eval.query(&query.query)?;
     match results[0].clone() {
         QueryResult::Literal(val) | QueryResult::Resolved(val) => {
